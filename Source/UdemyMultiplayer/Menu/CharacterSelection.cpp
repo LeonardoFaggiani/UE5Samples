@@ -4,6 +4,8 @@
 #include "CharacterSelection.h"
 #include "../LobbyPlayerController.h"
 #include "Net/UnrealNetwork.h"
+#include "Animation/UMGSequencePlayer.h"
+
 
 bool UCharacterSelection::Initialize() {
     
@@ -15,13 +17,21 @@ bool UCharacterSelection::Initialize() {
         WarriorButton->OnClicked.AddDynamic(this, &UCharacterSelection::OnWarriorButtonClicked);
         ArcherButton->OnClicked.AddDynamic(this, &UCharacterSelection::OnArcherButtonClicked);
         WizardButton->OnClicked.AddDynamic(this, &UCharacterSelection::OnWizardButtonClicked);
+
+        StartDelegate.BindDynamic(this, &UCharacterSelection::AnimationStarted);
+        EndDelegate.BindDynamic(this, &UCharacterSelection::AnimationFinished);
+
+        BindToAnimationStarted(this->FadeMenu, StartDelegate);
+        BindToAnimationFinished(this->FadeMenu, EndDelegate);
     }
 
     this->CurrentCharacterSelected = 0;
+    
+    this->SetRenderOpacity(0);
+    this->SetVisibility(ESlateVisibility::HitTestInvisible);
 
     return true;
 }
-
 
 void UCharacterSelection::OnWarriorButtonClicked()
 {
@@ -47,6 +57,34 @@ void UCharacterSelection::NotifyPlayerController()
 
     LobbyPlayerController->Client_AssignPlayer(this->CurrentCharacterSelected);
 
+}
+
+void UCharacterSelection::ToggleMenu()
+{    
+    //if opacity is 0 then the menu its hidden.
+    if (0.0f == this->GetRenderOpacity())
+        this->PlayAnimationForward(this->FadeMenu, 4);
+    else
+        this->PlayAnimationReverse(this->FadeMenu);
+    
+}
+
+void UCharacterSelection::AnimationStarted()
+{
+    this->CurrentOpacity = this->GetRenderOpacity();
+}
+
+void UCharacterSelection::AnimationFinished()
+{
+    if (this->CurrentOpacity == 0.0f) {
+        this->SetVisibility(ESlateVisibility::Visible);
+        this->SetRenderOpacity(1);
+    }        
+    else {
+        this->SetRenderOpacity(0);
+        this->SetVisibility(ESlateVisibility::HitTestInvisible);
+    }
+        
 }
 
 void UCharacterSelection::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

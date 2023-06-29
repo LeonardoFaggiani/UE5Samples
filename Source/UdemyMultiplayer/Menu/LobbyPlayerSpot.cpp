@@ -2,36 +2,52 @@
 
 
 #include "LobbyPlayerSpot.h"
+#include "Net/UnrealNetwork.h"
+#include "OverheadPlayerSpot.h"
 
 // Sets default values
 ALobbyPlayerSpot::ALobbyPlayerSpot()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 
-}
+	SetIsReady(true);
 
-bool ALobbyPlayerSpot::GetIsUsed()
-{
-	return this->IsUsed;
-}
-
-void ALobbyPlayerSpot::SetIsUsed(bool isUsed)
-{
-	this->IsUsed = isUsed;
+	OverheadPlayerSpot = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadPlayerSpot"));
+	OverheadPlayerSpot->SetupAttachment(RootComponent);
 }
 
 // Called when the game starts or when spawned
 void ALobbyPlayerSpot::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
-// Called every frame
-void ALobbyPlayerSpot::Tick(float DeltaTime)
+void ALobbyPlayerSpot::SetIsReady(bool bready)
 {
-	Super::Tick(DeltaTime);
-
+	this->bReady = bready;
 }
 
+void ALobbyPlayerSpot::OnRep_ReadyStateUpdated()
+{
+	this->GetComponents<UStaticMeshComponent>(Components);
+
+	for (int32 i = 0; i < Components.Num(); i++)
+	{
+		UStaticMeshComponent* StaticMeshComponent = Components[i];
+
+		if (StaticMeshComponent->GetName() == FString("PlayerStatus"))
+		{
+			UMaterialInterface* CurrentState = this->bReady ? ReadyState : NotReadyState;
+
+			StaticMeshComponent->SetMaterial(0, CurrentState);
+		}
+	}
+}
+
+void ALobbyPlayerSpot::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ALobbyPlayerSpot, bReady);
+}

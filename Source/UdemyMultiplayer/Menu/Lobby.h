@@ -26,28 +26,16 @@ class UDEMYMULTIPLAYER_API ULobby : public UMenuBase
 	GENERATED_BODY()
 
 public:
-	
-	UPROPERTY(EditAnyWhere)
-		TSubclassOf<UPlayerLobbyList> PlayerLobbyListClass;
-
-	UFUNCTION(BlueprintCallable, Client, Reliable)
-	void Client_UpdatePlayerList(const FLobbyPlayerInfo& PlayerInfo);
-	void Client_UpdatePlayerList_Implementation(const FLobbyPlayerInfo& PlayerInfo);
 
 	UPROPERTY(meta = (BindWidget))
 		class UOverlay* CharacterSelectionContainer;
-
-	UPROPERTY(meta = (BindWidget))
-		class UScrollBox* PlayerListInLobby;
 
 	void SetCurrentPlayersFormat(FString currentPlayersFormat);
 	void SetServerName(FString serverName);
 	void UpdateStatus();
 	void SetMap(UTexture2D* mapImage, FString mapName);
 	void ShowOrHideButton();
-
-	UFUNCTION()
-		void ClearPlayerList();
+	void SetEnablePlayButton(bool bEnabled);
 
 protected:
 

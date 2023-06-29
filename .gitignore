@@ -12,3 +12,7 @@ Saved
 *.suo
 *.xcodeproj
 *.xcworkspace
+/Build/Windows
+/Platforms/HoloLens/Config
+/Plugins
+/.vsconfig

@@ -23,6 +23,8 @@ bool ULobby::Initialize()
 
         if (lobbyGameMode != nullptr) {
             this->LobbyGameMode = lobbyGameMode;
+
+            this->InitializeMap();
         }
     }
 
@@ -33,20 +35,11 @@ bool ULobby::Initialize()
 
         PreviousMap->OnClicked.AddDynamic(this, &ULobby::OnPreviousMapButtonClicked);
         NextMap->OnClicked.AddDynamic(this, &ULobby::OnNextMapButtonClicked);
-
-
+        
         this->ShowOrHideButton();
     }
 
-    //this->CharacterSelectionContainer->SetVisibility(ESlateVisibility::Hidden);
-
-    this->InitializeMap();
-
     return true;
-}
-
-void ULobby::ClearPlayerList() {
-    PlayerListInLobby->ClearChildren();
 }
 
 void ULobby::SetServerName(FString serverName) {
@@ -62,37 +55,52 @@ void ULobby::ShowOrHideButton() {
 
     if (ReadyButton && PlayButton && PreviousMap && NextMap) {
 
-        if (World->IsServer()) {
-            this->PlayButton->SetVisibility(ESlateVisibility::Visible);
-            this->ReadyButton->SetVisibility(ESlateVisibility::Hidden);
-        }
-        else {
+        if (!World->IsServer()) {
             this->PlayButton->SetVisibility(ESlateVisibility::Hidden);
             this->ReadyButton->SetVisibility(ESlateVisibility::Visible);
+
+            this->PreviousMap->SetVisibility(ESlateVisibility::Collapsed);
+            this->NextMap->SetVisibility(ESlateVisibility::Collapsed);
         }
+
+        this->SetEnablePlayButton(false);
     }
 }
 
 #pragma region
+
+void ULobby::OnPlayButtonClicked()
+{
+    if (this->LobbyGameMode->IsAllPlayerReady())
+    {
+        for (ALobbyPlayerController* PlayerController : this->LobbyGameMode->AllPlayerControllers)        
+            PlayerController->Client_ShowLoadingScreen();        
+
+        this->LobbyGameMode->LaunchTheGame();
+    }    
+}
 
 void ULobby::OnReadyButtonClicked()
 {
     UpdateStatus();
 }
 
-void ULobby::OnPlayButtonClicked()
-{
-    for (ALobbyPlayerController* PlayerController : this->LobbyGameMode->AllPlayerControllers)
+void ULobby::UpdateStatus() 
+{    
+    ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(this->GetOwningPlayer());
+    
+    if (IsValid(LobbyPlayerController))
     {
-        PlayerController->Client_ShowLoadingScreen();
-    }
+        LobbyPlayerController->PlayerSettings.bPlayerReadyState = !LobbyPlayerController->PlayerSettings.bPlayerReadyState;
 
-    this->LobbyGameMode->LaunchTheGame();
+        LobbyPlayerController->UpdateReadyState();
+
+        LobbyPlayerController->Server_NotifyPlayerStatus(LobbyPlayerController->PlayerSettings);        
+    }
 }
 
-void ULobby::UpdateStatus() 
-{
-    
+void ULobby::SetEnablePlayButton(bool bEnabled) {
+    this->PlayButton->SetIsEnabled(bEnabled);
 }
 
 void ULobby::OnPreviousMapButtonClicked()
@@ -113,7 +121,7 @@ void ULobby::OnNextMapButtonClicked()
     UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), NULL, *FConfigurationMaps->ImagePath));
 
     this->SetMap(Texture, *FConfigurationMaps->Name);
-
+    
     this->NotifyMapChaged();
 }
 
@@ -130,6 +138,9 @@ void ULobby::InitializeMap()
         UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), NULL, *FConfigurationMaps->ImagePath));
 
         this->SetMap(Texture, *FConfigurationMaps->Name);
+
+        if(GetWorld()->IsServer())
+            this->NotifyMapChaged();
     }
 }
 
@@ -182,16 +193,6 @@ void ULobby::NotifyMapChaged() {
 
 void ULobby::SetCurrentPlayersFormat(FString currentPlayersFormat) {
     this->CurrentPlayersFormat->SetText(FText::FromString(currentPlayersFormat));
-}
-
-void ULobby::Client_UpdatePlayerList_Implementation(const FLobbyPlayerInfo& PlayerInfo) {
-    
-    UPlayerLobbyList* PlayerLobbyList = CreateWidget<UPlayerLobbyList>(this, PlayerLobbyListClass);
-    
-    PlayerLobbyList->SetPlayerName(PlayerInfo.PlayerName);
-    PlayerLobbyList->SetIsReady(PlayerInfo.bPlayerReadyState);
-    
-    this->PlayerListInLobby->AddChild(PlayerLobbyList);    
 }
 
 void ULobby::SetMap(UTexture2D* mapImage, FString mapName) {

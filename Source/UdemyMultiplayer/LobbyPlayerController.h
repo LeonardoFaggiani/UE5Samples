@@ -5,12 +5,15 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "Menu/Lobby.h"
+#include "Menu/CharacterSelection.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/Widget.h"
+#include "Components/CanvasPanelSlot.h"
 #include "./Menu/Struct/LobbyPlayerInfo.h"
 #include "InputActionValue.h"
+#include "Templates/SharedPointer.h"
 #include "LobbyPlayerController.generated.h"
 
-class UInputMappingContext;
 class AUdemyMultiplayerCharacter;
 class ALobbyPlayerSpot;
 
@@ -24,16 +27,18 @@ class UDEMYMULTIPLAYER_API ALobbyPlayerController : public APlayerController
 
 public:
 	ALobbyPlayerController(const FObjectInitializer& ObjectInitializer);
+
 	void SetCurrentCharacter(AUdemyMultiplayerCharacter* currentCharacter);
 	AUdemyMultiplayerCharacter* GetCurrentCharacter();
 	void SetPlayerSpot(ALobbyPlayerSpot* playerSpot);
+	void UpdateReadyState();
 	ALobbyPlayerSpot* GetPlayerSpot();
 
 	UPROPERTY(Replicated)
 	FLobbyPlayerInfo PlayerSettings;
 
 	UPROPERTY(Replicated)
-	TArray<struct FLobbyPlayerInfo> AllConnectedPlayers;
+	ALobbyPlayerSpot* PlayerSpot;
 
 	UFUNCTION(BlueprintCallable, Client, Reliable)
 		void Client_SetupLobbyMenu(const FString& ServerName);
@@ -47,6 +52,10 @@ public:
 		void Server_CallUpdate(const FLobbyPlayerInfo& PlayerInfo);
 		void Server_CallUpdate_Implementation(const FLobbyPlayerInfo& PlayerInfo);
 
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+		void Server_NotifyPlayerStatus(const FLobbyPlayerInfo& PlayerInfo);
+		void Server_NotifyPlayerStatus_Implementation(const FLobbyPlayerInfo& PlayerInfo);
+
 	UFUNCTION(BlueprintCallable, Client, Reliable)
 		void Client_UpdateNumberOfPlayers(int32 CurrentPlayers, int32 MaxPlayers);
 		void Client_UpdateNumberOfPlayers_Implementation(int32 CurrentPlayers, int32 MaxPlayers);
@@ -56,17 +65,25 @@ public:
 		void Client_AssignPlayer_Implementation(int32 CharacterSelected);
 
 	UFUNCTION(BlueprintCallable, Client, Reliable)
-		void Client_AddPlayersInfo(const TArray<struct FLobbyPlayerInfo>& ConnectedPlayersInfo);
-		void Client_AddPlayersInfo_Implementation(const TArray<struct FLobbyPlayerInfo>& ConnectedPlayersInfo);
-
-	UFUNCTION(BlueprintCallable, Client, Reliable)
 		void Client_ShowLoadingScreen();
 		void Client_ShowLoadingScreen_Implementation();
 
+	void ToggleCharacterSelectionMenu(const FInputActionValue& Value);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+		class UInputMappingContext* LobbyPlayerControllerMappingContext;		
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+		class UInputAction* ToggleMenuAction;		
+
+	virtual void BeginPlay() override;
+	virtual void SetupInputComponent() override;
+
 private:
 	class ULobby* Lobby;
+	class UCharacterSelection* CharacterSelection;	
 	class ALobbyGameMode* LobbyGameMode;
 	AUdemyMultiplayerCharacter* CurrentCharacter;
-	ALobbyPlayerSpot* PlayerSpot;
 	TSubclassOf<UUserWidget> LobbyClass;
+	TSubclassOf<UUserWidget> CharacterSelectionClass;
 };

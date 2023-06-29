@@ -7,11 +7,24 @@
 #include "Components/WidgetSwitcher.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
+#include "UdemyMultiplayerCharacter.h"
 
 UUdemyMultiplayerGameInstance::UUdemyMultiplayerGameInstance(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	static ConstructorHelpers::FClassFinder<UUserWidget> MenuBPClass(TEXT("/Game/UI/Menu/WBP_Menu"));
 	static ConstructorHelpers::FClassFinder<UUserWidget> LoadingScreenBPClass(TEXT("/Game/UI/Menu/WBP_LoadingScreen"));
+
+	static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WarriorBPClass(TEXT("/Game/Blueprints/Characters/BP_Warrior"));
+	static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> ArcherBPClass(TEXT("/Game/Blueprints/Characters/BP_Archer"));
+	static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WizardBPClass(TEXT("/Game/Blueprints/Characters/BP_Wizard"));
+
+	if (!ensure(WarriorBPClass.Class != nullptr)) return;
+	if (!ensure(ArcherBPClass.Class != nullptr)) return;
+	if (!ensure(WizardBPClass.Class != nullptr)) return;
+
+	this->Characters.Add(WarriorBPClass.Class);
+	this->Characters.Add(ArcherBPClass.Class);
+	this->Characters.Add(WizardBPClass.Class);
 
 	if (!ensure(MenuBPClass.Class != nullptr)) return;
 	if (!ensure(LoadingScreenBPClass.Class != nullptr)) return;
@@ -47,7 +60,7 @@ void UUdemyMultiplayerGameInstance::Join(bool bIsLan)
 
 	SetSwitchByIndex(2);
 
-	MultiplayerSessionsSubsystem->FindSessions(10000, bIsLan);
+	MultiplayerSessionsSubsystem->FindSessions(50000, bIsLan);
 }
 
 void UUdemyMultiplayerGameInstance::GoToLobby()
@@ -105,8 +118,8 @@ void UUdemyMultiplayerGameInstance::ShowLoadingScreen() {
 }
 
 void UUdemyMultiplayerGameInstance::InitializeMapConfigurations()
-{	
-    this->ConfigurationMaps.Add("LobbyMap", FConfigurationMaps{ TEXT("/Game/ThirdPerson/Maps/Lobby?listen"), TEXT("/Game/UI/Menu/Textures/LobbyMap"),TEXT("Lobby"), 1 });
+{
+    this->ConfigurationMaps.Add("LobbyMap", FConfigurationMaps{ TEXT("Game/ThirdPerson/Maps/ThirdPersonMap?listen"), TEXT("/Game/UI/Menu/Textures/LobbyMap"),TEXT("ThirdPersonMap"), 1 });
 	this->ConfigurationMaps.Add("CementeryMap", FConfigurationMaps{ TEXT("/Game/ThirdPerson/Maps/Cementery?listen"), TEXT("/Game/UI/Menu/Textures/CementeryMap"),TEXT("Cementery"), 2 });
 	this->ConfigurationMaps.Add("EgyptMap", FConfigurationMaps{ TEXT("/Game/ThirdPerson/Maps/Egypt?listen"), TEXT("/Game/UI/Menu/Textures/EgyptMap"),TEXT("Egypt"), 3 });
 }
@@ -125,4 +138,5 @@ void UUdemyMultiplayerGameInstance::GetLifetimeReplicatedProps(TArray<FLifetimeP
 
 	DOREPLIFETIME(UUdemyMultiplayerGameInstance, MaxPlayers);
 	DOREPLIFETIME(UUdemyMultiplayerGameInstance, ServerName);
+	DOREPLIFETIME(UUdemyMultiplayerGameInstance, Characters);
 }

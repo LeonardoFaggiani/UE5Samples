@@ -9,26 +9,13 @@
 #include "Net/UnrealNetwork.h"
 #include "../UdemyMultiplayerGameInstance.h"
 #include "../UdemyMultiplayerCharacter.h"
+#include "GameFramework/PlayerState.h"
 #include "../Menu/LobbyPlayerSpot.h"
 #include "GameFramework/GameStateBase.h"
 
 
 ALobbyGameMode::ALobbyGameMode(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
-{
-	static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WarriorBPClass(TEXT("/Game/Blueprints/Characters/BP_Warrior"));
-	static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> ArcherBPClass(TEXT("/Game/Blueprints/Characters/BP_Archer"));
-	static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WizardBPClass(TEXT("/Game/Blueprints/Characters/BP_Wizard"));
-
-	if (!ensure(WarriorBPClass.Class != nullptr)) return;
-	if (!ensure(ArcherBPClass.Class != nullptr)) return;
-	if (!ensure(WizardBPClass.Class != nullptr)) return;
-
-	this->Characters.Add(WarriorBPClass.Class);
-	this->Characters.Add(ArcherBPClass.Class);
-	this->Characters.Add(WizardBPClass.Class);
-
-	DefaultCharacterChampion = this->Characters[0];
-	
+{	
 	PlayerControllerClass = ALobbyPlayerController::StaticClass();	
 
 	UWorld* World = GetWorld();
@@ -37,10 +24,11 @@ ALobbyGameMode::ALobbyGameMode(const FObjectInitializer& ObjectInitializer) : Su
     {
         UGameInstance* GameInstance = World->GetGameInstance();
 
-        if (IsValid(GameInstance))
-            UdemyMultiplayerGameInstance = Cast<UUdemyMultiplayerGameInstance>(GameInstance);
+		if (IsValid(GameInstance)) {
+			UdemyMultiplayerGameInstance = Cast<UUdemyMultiplayerGameInstance>(GameInstance);
+			DefaultCharacterChampion = UdemyMultiplayerGameInstance->Characters[0];
+		}
     }
-
 }
 
 void ALobbyGameMode::PostLogin(APlayerController* NewPlayer) {
@@ -59,8 +47,6 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer) {
 
                 MaxPlayers = UdemyMultiplayerGameInstance->MaxPlayers;
 
-                UGameplayStatics::GetAllActorsOfClass(GetWorld(), ALobbyPlayerSpot::StaticClass(), this->SpawnPoints);
-
                 FConfigurationMaps* DefaultMap = UdemyMultiplayerGameInstance->ConfigurationMaps.Find(TEXT("LobbyMap"));
 
                 UTexture2D* mapImage = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), NULL, *DefaultMap->ImagePath));
@@ -68,10 +54,13 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer) {
 				LobbyPlayerController->Client_SetupLobbyMenu(UdemyMultiplayerGameInstance->ServerName);
 
 				LobbyPlayerController->Client_UpdateLobbySettings(mapImage, *DefaultMap->Name);
-
-				Server_SpawnLobbyPlayerSpot(LobbyPlayerController);
+				
+				Server_SpawnLobbyPlayerSpot();
 
                 Server_RespawnPlayer(LobbyPlayerController);
+
+				Server_EveryoneUpdate();	
+
             }
         }
     }
@@ -103,11 +92,10 @@ bool ALobbyGameMode::IsAllPlayerReady()
 void ALobbyGameMode::Server_SwapCharacter_Implementation(APlayerController* PlayerController, int32 playerCharacterIndex, bool bChangeStatus)
 {
     if (!bChangeStatus) {
-
-        if (this->Characters.IsValidIndex(playerCharacterIndex)) {
+        if (UdemyMultiplayerGameInstance->Characters.IsValidIndex(playerCharacterIndex)) {
 			ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(PlayerController);
-            this->DefaultCharacterChampion = this->Characters[playerCharacterIndex];
-            this->ShowCharacterSelectedInLobby(LobbyPlayerController);
+            this->DefaultCharacterChampion = UdemyMultiplayerGameInstance->Characters[playerCharacterIndex];
+            this->DestroyCharacterSelectedIfExits(LobbyPlayerController);
         }
     }
 }
@@ -123,32 +111,33 @@ void ALobbyGameMode::Server_UpdateGameSettings_Implementation(UTexture2D* mapIma
 	}
 }
 
-FPlayerSpot* ALobbyGameMode::GetPlayerSpotForPlayerConnected()
+void ALobbyGameMode::Server_SpawnLobbyPlayerSpot_Implementation()
 {
-	FPlayerSpot* PlayerSpotIndex = UdemyMultiplayerGameInstance->ConfigurationPlayerSpot.Find(this->AllPlayerControllers.Num());
-	
-	return PlayerSpotIndex;
-}
+	FPlayerSpot* PlayerSpotByIndex = GetPlayerSpotForPlayerConnected();
 
-void ALobbyGameMode::Server_SpawnLobbyPlayerSpot_Implementation(ALobbyPlayerController* LobbyPlayerController)
-{
-    FPlayerSpot* PlayerSpotByIndex = GetPlayerSpotForPlayerConnected();
+	if (PlayerSpotByIndex != nullptr)
+	{
+		FActorSpawnParameters params;
 
-    if (PlayerSpotByIndex != nullptr)
-    {
-        FActorSpawnParameters params;
+		params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-        params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		for (ALobbyPlayerController* PlayerController : this->AllPlayerControllers)
+		{
+			ALobbyPlayerSpot* LobbyPlayerSpot = PlayerController->GetPlayerSpot();
 
-        ALobbyPlayerSpot* LobbyPlayerSpotSpawned = Cast<ALobbyPlayerSpot>(GetWorld()->SpawnActor<ALobbyPlayerSpot>(LobbyPlayerSpotClass, PlayerSpotByIndex->Location, PlayerSpotByIndex->Rotation, params));
+			if (!IsValid(LobbyPlayerSpot)) {
 
-        LobbyPlayerController->SetPlayerSpot(LobbyPlayerSpotSpawned);
-    }
+				ALobbyPlayerSpot* LobbyPlayerSpotSpawned = Cast<ALobbyPlayerSpot>(GetWorld()->SpawnActor<ALobbyPlayerSpot>(LobbyPlayerSpotClass, PlayerSpotByIndex->Location, PlayerSpotByIndex->Rotation, params));
+
+				PlayerController->SetPlayerSpot(LobbyPlayerSpotSpawned);
+			}
+		}
+	}
 }
 
 void ALobbyGameMode::Server_RespawnPlayer_Implementation(ALobbyPlayerController* LobbyPlayerController)
 {
-	this->ShowCharacterSelectedInLobby(LobbyPlayerController);
+	this->DestroyCharacterSelectedIfExits(LobbyPlayerController);
 }
 
 void ALobbyGameMode::Server_EveryoneUpdate_Implementation() 
@@ -160,14 +149,19 @@ void ALobbyGameMode::Server_EveryoneUpdate_Implementation()
 
 	for (ALobbyPlayerController* PlayerController : this->AllPlayerControllers)
 	{
-		this->ConnectedPlayers.Add(PlayerController->PlayerSettings);	
+		this->ConnectedPlayers.Add(PlayerController->PlayerSettings);
 	}
 
 	for (ALobbyPlayerController* PlayerController : this->AllPlayerControllers)
-	{
+	{		
 		PlayerController->Client_UpdateNumberOfPlayers(this->CurrentPlayers, this->MaxPlayers);
 
-		PlayerController->Client_AddPlayersInfo(this->ConnectedPlayers);
+		ALobbyPlayerSpot* LobbyPlayerSpot = PlayerController->GetPlayerSpot();
+
+		if (IsValid(LobbyPlayerSpot)) {
+			LobbyPlayerSpot->SetIsReady(PlayerController->PlayerSettings.bPlayerReadyState);
+			LobbyPlayerSpot->OnRep_ReadyStateUpdated();
+		}
 	}
 }
 
@@ -175,32 +169,27 @@ void ALobbyGameMode::LaunchTheGame()
 {
 	UWorld* World = GetWorld();
 
-	const FString FullMapPath = FString(TEXT("/Game/ThirdPerson/Maps/{0}?listen: {0}"));
+	const FString FullMapPath = FString(TEXT("/Game/ThirdPerson/Maps/{0}?listen"));
 
-	if (World)
-		World->ServerTravel(FString::Format(*FullMapPath, { MapName }));
-}
+	FString MapToTravel = FString::Format(*FullMapPath, { MapName });
 
-ALobbyPlayerSpot* ALobbyGameMode::GetFreePlayerSpot() 
-{
-	for (AActor* ActorSpot : this->SpawnPoints)
-	{
-		ALobbyPlayerSpot* LobbyPlayerSpot = Cast<ALobbyPlayerSpot>(ActorSpot);
-
-		if (!LobbyPlayerSpot->GetIsUsed())
-			return LobbyPlayerSpot;
+	if (World) {
+		//bUseSeamlessTravel = true;		
+		World->ServerTravel(FString(MapToTravel));
 	}
-
-	return nullptr;
+		
 }
 
 void ALobbyGameMode::SpawnCharacterOnPlayerSpot(ALobbyPlayerController* LobbyPlayerController)
 {
+	ALobbyPlayerSpot* LobbyPlayerSpot = LobbyPlayerController->GetPlayerSpot();
+
+	if (!IsValid(LobbyPlayerSpot))
+		return;
+
 	FActorSpawnParameters params;
 
 	params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	ALobbyPlayerSpot* LobbyPlayerSpot = LobbyPlayerController->GetPlayerSpot();
 
 	AUdemyMultiplayerCharacter* SpawnCharacter = Cast<AUdemyMultiplayerCharacter>(GetWorld()->SpawnActor<AUdemyMultiplayerCharacter>(DefaultCharacterChampion, LobbyPlayerSpot->GetActorTransform(), params));
 
@@ -214,23 +203,24 @@ void ALobbyGameMode::SpawnCharacterOnPlayerSpot(ALobbyPlayerController* LobbyPla
 
 	SpawnCharacter->SetActorTransform(ActorTransform);
 
-	LobbyPlayerSpot->SetIsUsed(true);
-
 	LobbyPlayerController->SetCurrentCharacter(SpawnCharacter);
 }
 
-void ALobbyGameMode::ShowCharacterSelectedInLobby(ALobbyPlayerController* LobbyPlayerController)
+void ALobbyGameMode::DestroyCharacterSelectedIfExits(ALobbyPlayerController* LobbyPlayerController)
 {
     AUdemyMultiplayerCharacter* UdemyMultiplayerCharacter = LobbyPlayerController->GetCurrentCharacter();
-    ALobbyPlayerSpot* LobbyPlayerSpot = LobbyPlayerController->GetPlayerSpot();
 
-    if (UdemyMultiplayerCharacter != nullptr)
+    if (IsValid(UdemyMultiplayerCharacter))
         UdemyMultiplayerCharacter->Destroy();
+	
+	this->SpawnCharacterOnPlayerSpot(LobbyPlayerController);
+}
 
-    if (IsValid(LobbyPlayerSpot))
-        this->SpawnCharacterOnPlayerSpot(LobbyPlayerController);
+FPlayerSpot* ALobbyGameMode::GetPlayerSpotForPlayerConnected()
+{
+	FPlayerSpot* PlayerSpotIndex = UdemyMultiplayerGameInstance->ConfigurationPlayerSpot.Find(this->AllPlayerControllers.Num());
 
-    Server_EveryoneUpdate();
+	return PlayerSpotIndex;
 }
 
 void ALobbyGameMode::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -238,11 +228,9 @@ void ALobbyGameMode::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ALobbyGameMode, AllPlayerControllers);
-	DOREPLIFETIME(ALobbyGameMode, SpawnPoints);
 	DOREPLIFETIME(ALobbyGameMode, MapImage);
 	DOREPLIFETIME(ALobbyGameMode, MapName);
 	DOREPLIFETIME(ALobbyGameMode, CurrentPlayers);
 	DOREPLIFETIME(ALobbyGameMode, MaxPlayers);
 	DOREPLIFETIME(ALobbyGameMode, ConnectedPlayers);
-	DOREPLIFETIME(ALobbyGameMode, Characters);
 }

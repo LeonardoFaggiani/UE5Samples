@@ -8,6 +8,15 @@ public class UdemyMultiplayer : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "EnhancedInput", "MultiplayerSessions", "OnlineSubsystem", "SlateCore" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", 
+			"CoreUObject", 
+			"Engine", 
+			"InputCore", 
+			"HeadMountedDisplay", 
+			"EnhancedInput", 
+			"MultiplayerSessions", 
+			"OnlineSubsystem", 
+			"SlateCore"
+		});
     }
 }

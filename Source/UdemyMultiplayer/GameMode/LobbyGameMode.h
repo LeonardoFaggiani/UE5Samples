@@ -44,8 +44,8 @@ public:
 	void Server_EveryoneUpdate_Implementation();
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_SpawnLobbyPlayerSpot(ALobbyPlayerController* LobbyPlayerController);
-	void Server_SpawnLobbyPlayerSpot_Implementation(ALobbyPlayerController* LobbyPlayerController);
+	void Server_SpawnLobbyPlayerSpot();
+	void Server_SpawnLobbyPlayerSpot_Implementation();
 
 	FPlayerSpot* GetPlayerSpotForPlayerConnected();
 
@@ -54,8 +54,6 @@ public:
 	UPROPERTY(Replicated)
 	TArray<struct FLobbyPlayerInfo> ConnectedPlayers;
 	UPROPERTY(Replicated)
-	TArray<AActor*> SpawnPoints;
-	UPROPERTY(Replicated)
 	UTexture2D* MapImage;
 	UPROPERTY(Replicated)
 	FString MapName;
@@ -63,15 +61,12 @@ public:
 	int32 CurrentPlayers;
 	UPROPERTY(Replicated)
 	int32 MaxPlayers;
-	UPROPERTY(Replicated)
-	TArray<TSubclassOf<AUdemyMultiplayerCharacter>> Characters;
 	TSubclassOf<AUdemyMultiplayerCharacter> DefaultCharacterChampion;
 	UPROPERTY(EditAnyWhere)
 	TSubclassOf<ALobbyPlayerSpot> LobbyPlayerSpotClass;
 
 private:
-	void ShowCharacterSelectedInLobby(ALobbyPlayerController* LobbyPlayerController);
-	ALobbyPlayerSpot* GetFreePlayerSpot();
+	void DestroyCharacterSelectedIfExits(ALobbyPlayerController* LobbyPlayerController);
 	void SpawnCharacterOnPlayerSpot(ALobbyPlayerController* LobbyPlayerController);
 	class UUdemyMultiplayerGameInstance* UdemyMultiplayerGameInstance;
 };

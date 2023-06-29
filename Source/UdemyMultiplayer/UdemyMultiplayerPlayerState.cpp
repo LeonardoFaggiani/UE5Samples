@@ -2,16 +2,8 @@
 
 
 #include "UdemyMultiplayerPlayerState.h"
-#include "Net/UnrealNetwork.h"
 
-AUdemyMultiplayerPlayerState::AUdemyMultiplayerPlayerState()
-{
-	this->bIsReady = false;
-}
 
-void AUdemyMultiplayerPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+AUdemyMultiplayerPlayerState::AUdemyMultiplayerPlayerState() {
 
-	DOREPLIFETIME(AUdemyMultiplayerPlayerState, bIsReady);
 }

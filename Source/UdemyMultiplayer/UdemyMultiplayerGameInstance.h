@@ -63,6 +63,9 @@ public:
         FString ServerName;
     bool bIsLAN{ false };
 
+	UPROPERTY(Replicated)
+		TArray<TSubclassOf<class AUdemyMultiplayerCharacter>> Characters;
+
 private:
 
 	class UMainMenu* Menu;

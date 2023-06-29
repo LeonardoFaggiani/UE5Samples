@@ -57,6 +57,8 @@ void USessionList::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
             FString Address;
             SessionInterface->GetResolvedConnectString(NAME_GameSession, Address);
 
+            GEngine->AddOnScreenDebugMessage(-2, 15.f, FColor::Purple, *Address);
+
             APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
 
             ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(PlayerController);

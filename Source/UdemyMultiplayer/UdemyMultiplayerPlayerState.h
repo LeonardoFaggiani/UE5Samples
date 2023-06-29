@@ -14,9 +14,5 @@ class UDEMYMULTIPLAYER_API AUdemyMultiplayerPlayerState : public APlayerState
 {
 	GENERATED_BODY()
 
-public:
 	AUdemyMultiplayerPlayerState();
-
-	UPROPERTY(Replicated)
-		bool bIsReady;
 };

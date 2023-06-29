@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
 #include "../UdemyMultiplayerCharacter.h"
+#include "Animation/WidgetAnimation.h"
 #include "CharacterSelection.generated.h"
 
 /**
@@ -21,18 +22,24 @@ public:
 	UPROPERTY(Replicated)
 	int32 CurrentCharacterSelected;
 
+	void ToggleMenu();
+
 protected:
 	virtual bool Initialize() override;	
 
+
 private:
 	UPROPERTY(meta = (BindWidget))
-		class UButton* ArcherButton;
+		UButton* ArcherButton;
 
 	UPROPERTY(meta = (BindWidget))
-		class UButton* WarriorButton;
+		UButton* WarriorButton;
 
 	UPROPERTY(meta = (BindWidget))
-		class UButton* WizardButton;
+		UButton* WizardButton;
+
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+		UWidgetAnimation* FadeMenu;
 
 	UFUNCTION() void OnArcherButtonClicked();
 	UFUNCTION() void OnWarriorButtonClicked();
@@ -43,4 +50,11 @@ private:
 	AUdemyMultiplayerCharacter* WarriorCharacter;
 	AUdemyMultiplayerCharacter* ArcherCharacter;
 	AUdemyMultiplayerCharacter* WizardCharacter;
+
+private:
+	float CurrentOpacity;
+	FWidgetAnimationDynamicEvent StartDelegate;
+	FWidgetAnimationDynamicEvent EndDelegate;
+	UFUNCTION() void AnimationStarted();
+	UFUNCTION() void AnimationFinished();
 };
