@@ -2,4 +2,20 @@
 
 
 #include "LoadingScreen.h"
+#include "Animation/UMGSequencePlayer.h"
+#include "Engine/EngineTypes.h"
 
+
+void ULoadingScreen::TransBounceIn()
+{
+    this->PlayAnimationForward(this->BounceInOut);
+}
+
+void ULoadingScreen::TransBounceOut()
+{
+    FTimerHandle MemberTimerHandle;
+
+    this->PlayAnimationReverse(this->BounceInOut);
+
+    GetWorld()->GetTimerManager().SetTimer(MemberTimerHandle, this, &ThisClass::RemoveFromParent, this->BounceInOut->GetEndTime(), false);
+}

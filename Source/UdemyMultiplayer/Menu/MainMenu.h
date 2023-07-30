@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/WidgetSwitcher.h"
 #include "Components/Button.h"
 #include "MenuBase.h"
 #include "MainMenu.generated.h"
@@ -17,12 +16,12 @@ class UDEMYMULTIPLAYER_API UMainMenu : public UMenuBase
 {
 	GENERATED_BODY()
 
-public:
-	UWidgetSwitcher* UMainMenu::GetMenuSwitcher();
-
 protected:
 	virtual bool Initialize();
 	virtual void NativeDestruct() override;
+
+	UPROPERTY(meta = (BindWidget))
+		class UButton* ExitButton;
 
 	UPROPERTY(meta = (BindWidget))
 		class UButton* HostButton;
@@ -30,14 +29,10 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 		class UButton* FindGamesButton;
 
-	UPROPERTY(meta = (BindWidget))
-		class UButton* ExitButton;
-
 	UFUNCTION() void OnHostButtonClicked();
 	UFUNCTION() void OnFindGamesButtonClick();
 	UFUNCTION() void OnExitButtonClick();
 
-	UPROPERTY(meta = (BindWidget))
-		class UWidgetSwitcher* WidgetSwitcherMenu;
-
+private:
+	class UUdemyMultiplayerGameInstance* UdemyMultiplayerGameInstance;
 };

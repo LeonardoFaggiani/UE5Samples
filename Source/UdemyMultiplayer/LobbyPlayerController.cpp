@@ -5,7 +5,6 @@
 #include "GameMode/LobbyGameMode.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
-#include "UdemyMultiplayerPlayerState.h"
 #include "InputMappingContext.h"
 #include "InputAction.h"
 #include "InputTriggers.h"
@@ -23,10 +22,21 @@ ALobbyPlayerController::ALobbyPlayerController(const FObjectInitializer& ObjectI
 	LobbyClass = LobbyBPClass.Class;
 	CharacterSelectionClass = CharacterSelectionBPClass.Class;
 
-	AGameModeBase* GameMode = UGameplayStatics::GetGameMode(this->GetWorld());
+	UWorld* World = this->GetWorld();
 
-	if(IsValid(GameMode))
-		LobbyGameMode = Cast<ALobbyGameMode>(GameMode);
+	if (IsValid(World))
+	{
+		AGameModeBase* GameMode = UGameplayStatics::GetGameMode(World);
+
+		if (IsValid(GameMode))
+			LobbyGameMode = Cast<ALobbyGameMode>(GameMode);
+
+		UGameInstance* GameInstance = World->GetGameInstance();
+
+		if (IsValid(GameInstance)) {
+			UdemyMultiplayerGameInstance = Cast<UUdemyMultiplayerGameInstance>(GameInstance);
+		}
+	}
 }
 
 void ALobbyPlayerController::BeginPlay()
@@ -94,19 +104,17 @@ void ALobbyPlayerController::Client_SetupLobbyMenu_Implementation(const FString&
 	if (!ensure(LobbyClass != nullptr)) return;
 	if (!ensure(CharacterSelectionClass != nullptr)) return;
 
-	Lobby = CreateWidget<ULobby>(this, LobbyClass);
-	CharacterSelection = CreateWidget<UCharacterSelection>(this, CharacterSelectionClass);
+	this->Lobby = CreateWidget<ULobby>(this, LobbyClass);
+	this->CharacterSelection = CreateWidget<UCharacterSelection>(this, CharacterSelectionClass);
 
-	if (!ensure(Lobby != nullptr)) return;
-	if (!ensure(CharacterSelection != nullptr)) return;
+	if (!ensure(this->Lobby != nullptr)) return;
+	if (!ensure(this->CharacterSelection != nullptr)) return;
 
-	this->CharacterSelection->AddToViewport();
+	this->CharacterSelection->Setup();
 
-	Lobby->CharacterSelectionContainer->AddChild(CharacterSelection);
-	Lobby->SetServerName(ServerName);
-	Lobby->AddToViewport();
-
-	this->bShowMouseCursor = true;
+	this->Lobby->CharacterSelectionContainer->AddChild(CharacterSelection);
+	this->Lobby->SetServerName(ServerName);
+	this->Lobby->Setup();
 }
 
 void ALobbyPlayerController::Server_CallUpdate_Implementation(const FLobbyPlayerInfo& PlayerInfo)
@@ -163,13 +171,7 @@ void ALobbyPlayerController::Client_AssignPlayer_Implementation(int32 CharacterS
 
 void ALobbyPlayerController::Client_ShowLoadingScreen_Implementation() 
 {
-	Lobby->TearDown();
-
-	ULoadingScreen* LoadingScreen = CreateWidget<ULoadingScreen>(this, ULoadingScreen::StaticClass());
-
-	if (!ensure(LoadingScreen != nullptr)) return;
-
-	LoadingScreen->Setup();
+	UdemyMultiplayerGameInstance->ShowLoadingScreen();
 }
 
 void ALobbyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

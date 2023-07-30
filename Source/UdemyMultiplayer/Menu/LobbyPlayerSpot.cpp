@@ -3,6 +3,7 @@
 
 #include "LobbyPlayerSpot.h"
 #include "Net/UnrealNetwork.h"
+#include "Kismet/GameplayStatics.h"
 #include "OverheadPlayerSpot.h"
 
 // Sets default values
@@ -15,6 +16,14 @@ ALobbyPlayerSpot::ALobbyPlayerSpot()
 
 	OverheadPlayerSpot = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadPlayerSpot"));
 	OverheadPlayerSpot->SetupAttachment(RootComponent);
+}
+
+void ALobbyPlayerSpot::Multi_SetPlayerName_Implementation(const FString& InPlayerName)
+{
+    UOverheadPlayerSpot* InOverheadPlayerSpot = Cast<UOverheadPlayerSpot>(this->OverheadPlayerSpot->GetUserWidgetObject());
+
+    if (IsValid(InOverheadPlayerSpot))
+        InOverheadPlayerSpot->SetPlayerName(InPlayerName);
 }
 
 // Called when the game starts or when spawned

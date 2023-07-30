@@ -7,10 +7,13 @@ void UMenuBase::Setup()
 	AddToViewport();
 
 	UWorld* World = GetWorld();
+
 	if (!ensure(World != nullptr)) return;
+
 	APlayerController* PlayerController = World->GetFirstPlayerController();
 
 	if (!ensure(PlayerController != nullptr)) return;
+
 	FInputModeUIOnly InputModeData;
 	InputModeData.SetWidgetToFocus(TakeWidget());
 	InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);

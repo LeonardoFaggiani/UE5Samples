@@ -57,6 +57,33 @@ void UCharacterSelection::NotifyPlayerController()
 
     LobbyPlayerController->Client_AssignPlayer(this->CurrentCharacterSelected);
 
+    this->SetButtonEnabled(this->CurrentCharacterSelected);
+}
+
+void UCharacterSelection::SetButtonEnabled(int32 InButtonIndexPressed) 
+{
+
+    switch (InButtonIndexPressed)
+    {
+        case 0:
+            this->WarriorButton->SetIsEnabled(!this->WarriorButton->GetIsEnabled());
+            this->ArcherButton->SetIsEnabled(true);
+            this->WizardButton->SetIsEnabled(true);
+            break;
+        case 1:
+            this->ArcherButton->SetIsEnabled(!this->ArcherButton->GetIsEnabled());
+            this->WarriorButton->SetIsEnabled(true);
+            this->WizardButton->SetIsEnabled(true);
+            break;
+        case 2:
+            this->WizardButton->SetIsEnabled(!this->WizardButton->GetIsEnabled());
+            this->ArcherButton->SetIsEnabled(true);
+            this->WarriorButton->SetIsEnabled(true);
+            break;
+        default:
+        break;
+    }
+
 }
 
 void UCharacterSelection::ToggleMenu()

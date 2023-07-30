@@ -31,11 +31,6 @@ bool USessionList::Initialize()
 
     InitializeSubSystem();
 
-    if (JoinButton)
-    {
-        JoinButton->OnClicked.AddDynamic(this, &ThisClass::OnJoinButtonClicked);
-    }
-
     return true;
 }
 
@@ -81,29 +76,29 @@ void USessionList::SetSessionIndex(int32 Index)
 
 void USessionList::SetPing(int Ping)
 {
-    PingText->SetText(FText::FromString(FString::FromInt(Ping)));
+
 }
 
 void USessionList::SetServerName(FString ServerName)
 {
-    ServerNameText->SetText(FText::FromString(ServerName));
+
 }
 
 void USessionList::SetPlayerName(FString PlayerName)
 {
-    PlayerNameText->SetText(FText::FromString(PlayerName));
+
 }
 
 void USessionList::EnableJoinButton(bool IsEnable)
 {
-    JoinButton->SetIsEnabled(IsEnable);
+
 }
 
 void USessionList::OnJoinButtonClicked()
 {
     this->EnableJoinButton(false);
 
-    this->UdemyMultiplayerGameInstance->ShowLoadingScreen();
+    //this->UdemyMultiplayerGameInstance->ShowLoadingScreen();
 
     if (MultiplayerSessionsSubsystem) {
 

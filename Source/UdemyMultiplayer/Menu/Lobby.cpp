@@ -32,6 +32,7 @@ bool ULobby::Initialize()
 
         ReadyButton->OnClicked.AddDynamic(this, &ULobby::OnReadyButtonClicked);
         PlayButton->OnClicked.AddDynamic(this, &ULobby::OnPlayButtonClicked);
+        //BackMainMenuButton->OnClicked.AddDynamic(this, &ULobby::OnBackMainMenuButtonClicked);
 
         PreviousMap->OnClicked.AddDynamic(this, &ULobby::OnPreviousMapButtonClicked);
         NextMap->OnClicked.AddDynamic(this, &ULobby::OnNextMapButtonClicked);
@@ -74,7 +75,7 @@ void ULobby::OnPlayButtonClicked()
     if (this->LobbyGameMode->IsAllPlayerReady())
     {
         for (ALobbyPlayerController* PlayerController : this->LobbyGameMode->AllPlayerControllers)        
-            PlayerController->Client_ShowLoadingScreen();        
+            PlayerController->Client_ShowLoadingScreen();           
 
         this->LobbyGameMode->LaunchTheGame();
     }    

@@ -11,8 +11,8 @@
 #include "Menu/Struct/PlayerSpot.h"
 #include "Menu/MainMenu.h"
 #include "Menu/LoadingScreen.h"
+#include "Engine/LevelScriptActor.h"
 #include "UdemyMultiplayerGameInstance.generated.h"
-
 
 /**
  * 
@@ -26,30 +26,37 @@ public:
 
 	UUdemyMultiplayerGameInstance(const FObjectInitializer& ObjectInitializer);
 
+	void Init() override;
+
 	UFUNCTION(BlueprintCallable)
-		void LoadMenu();
+		UMainMenu* LoadMenu();
 
 	UFUNCTION(Exec)
-		virtual void Host() override;
-
-	UFUNCTION(Exec)
-		virtual void Join(bool bIsLan) override;
+		virtual void Join() override;
 
 	UFUNCTION(Exec)
 		virtual void Quit() override;
 
-	UFUNCTION(Exec)
-		virtual void GoToLobby() override;
-
-	UFUNCTION(Exec)
+	UFUNCTION(BlueprintCallable, Exec)
 		virtual void LoadMainMenu() override;
+
+	UFUNCTION(BlueprintCallable)
+		void OpenNextLevel(FName InLevel, bool bIsListen, bool bShowLoading, float OpenLevelDelay);
+
+	UFUNCTION(BlueprintCallable)
+		void SetHostSettings(int32 NumberOfPlayers, FString ServerName);
 
 	UFUNCTION(BlueprintCallable)
 		void ShowLoadingScreen();
 
+	UFUNCTION(BlueprintCallable)
+		void HideLoadingScreen();
+
 	void InitializeMapConfigurations();
 	void InitializePlayerSpot();
-	void SetHostSettings(int32 NumberOfPlayers, bool bIsLan, FString ServerName);
+	void SetHostGame(bool InbIsHostGameMenu);
+	void SetFindGames(bool InbIsFindGamesMenu);
+	
 
     TSubclassOf<UUserWidget> MenuClass;
 	TSubclassOf<UUserWidget> LoadingScreenClass;
@@ -61,17 +68,34 @@ public:
         int32 MaxPlayers;
     UPROPERTY(Replicated)
         FString ServerName;
-    bool bIsLAN{ false };
-
 	UPROPERTY(Replicated)
 		TArray<TSubclassOf<class AUdemyMultiplayerCharacter>> Characters;
 
+	UFUNCTION(BlueprintCallable)
+		void SetBackToMainMenu(bool InbIsBackToMainMenu);
+
+	UFUNCTION(BlueprintCallable)
+		bool GetBackToMainMenu();
+
+	UFUNCTION(BlueprintCallable)
+		bool GetFindGames();
+
+	UFUNCTION(BlueprintCallable)
+		bool GetHostGame();
+
 private:
+	UPROPERTY()
+	bool bIsBackToMainMenu{ false };
+	UPROPERTY()
+	bool bIsHostGameMenu{ false };
+	UPROPERTY()
+	bool bIsFindGamesMenu{ false };
+	UPROPERTY()
+		ULoadingScreen* LoadingScreen;
+
+	UFUNCTION()
+		void OpenLevelWithDelay(FName InLevelName, FString InListen);
 
 	class UMainMenu* Menu;
-	class ULoadingScreen* LoadingScreen;
-
-	void SetSwitchByIndex(int32 Index);
-
 	class UMultiplayerSessionsSubsystem* MultiplayerSessionsSubsystem;
 };

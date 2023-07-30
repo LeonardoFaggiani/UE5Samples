@@ -17,13 +17,12 @@ class UDEMYMULTIPLAYER_API UOverheadPlayerSpot : public UUserWidget
 	GENERATED_BODY()
 
 public:
-
-	UFUNCTION(BlueprintCallable)
-		void SetPlayerName(FString PlayerName);
+	
+	void SetPlayerName(FString PlayerName);
 
 	UPROPERTY(meta = (BindWidget))
 		UTextBlock* LobbyPlayerName;
 
 protected:
-	virtual void NativeDestruct() override;	
+	virtual void NativeDestruct() override;		
 };

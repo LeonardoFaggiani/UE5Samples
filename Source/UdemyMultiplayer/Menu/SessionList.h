@@ -34,18 +34,6 @@ protected:
 
 private:
 
-	UPROPERTY(meta = (BindWidget))
-		class UButton* JoinButton;
-
-	UPROPERTY(meta = (BindWidget))
-		class UTextBlock* PingText;
-
-	UPROPERTY(meta = (BindWidget))
-		class UTextBlock* ServerNameText;
-
-	UPROPERTY(meta = (BindWidget))
-		class UTextBlock* PlayerNameText;
-
 	UFUNCTION() void OnJoinButtonClicked();
 
 	class UMultiplayerSessionsSubsystem* MultiplayerSessionsSubsystem;

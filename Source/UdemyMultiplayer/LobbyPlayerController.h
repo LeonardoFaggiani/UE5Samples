@@ -10,6 +10,7 @@
 #include "Components/Widget.h"
 #include "Components/CanvasPanelSlot.h"
 #include "./Menu/Struct/LobbyPlayerInfo.h"
+#include "UdemyMultiplayerGameInstance.h"
 #include "InputActionValue.h"
 #include "Templates/SharedPointer.h"
 #include "LobbyPlayerController.generated.h"
@@ -83,6 +84,8 @@ private:
 	class ULobby* Lobby;
 	class UCharacterSelection* CharacterSelection;	
 	class ALobbyGameMode* LobbyGameMode;
+	class UUdemyMultiplayerGameInstance* UdemyMultiplayerGameInstance;
+
 	AUdemyMultiplayerCharacter* CurrentCharacter;
 	TSubclassOf<UUserWidget> LobbyClass;
 	TSubclassOf<UUserWidget> CharacterSelectionClass;

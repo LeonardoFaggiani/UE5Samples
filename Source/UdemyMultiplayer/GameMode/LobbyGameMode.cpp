@@ -2,7 +2,6 @@
 
 
 #include "LobbyGameMode.h"
-#include "../UdemyMultiplayerPlayerState.h"
 #include "../LobbyPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/UnrealMathUtility.h"
@@ -12,6 +11,7 @@
 #include "GameFramework/PlayerState.h"
 #include "../Menu/LobbyPlayerSpot.h"
 #include "GameFramework/GameStateBase.h"
+#include "../UdemyMultiplayerPlayerState.h"
 
 
 ALobbyGameMode::ALobbyGameMode(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -60,7 +60,6 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer) {
                 Server_RespawnPlayer(LobbyPlayerController);
 
 				Server_EveryoneUpdate();	
-
             }
         }
     }
@@ -140,6 +139,23 @@ void ALobbyGameMode::Server_RespawnPlayer_Implementation(ALobbyPlayerController*
 	this->DestroyCharacterSelectedIfExits(LobbyPlayerController);
 }
 
+void ALobbyGameMode::Server_UpdatePlayerName_Implementation()
+{
+    for (ALobbyPlayerController* PlayerController : this->AllPlayerControllers)
+    {
+        ALobbyPlayerSpot* LobbyPlayerSpot = PlayerController->GetPlayerSpot();
+
+        AUdemyMultiplayerPlayerState* UdemyMultiplayerPlayerState = PlayerController->GetPlayerState<AUdemyMultiplayerPlayerState>();
+
+        if (IsValid(LobbyPlayerSpot) && IsValid(UdemyMultiplayerPlayerState)) {
+
+            PlayerController->PlayerSettings.PlayerName = UdemyMultiplayerPlayerState->GetPlayerName();
+
+            LobbyPlayerSpot->Multi_SetPlayerName(PlayerController->PlayerSettings.PlayerName);
+        }
+    }
+}
+
 void ALobbyGameMode::Server_EveryoneUpdate_Implementation() 
 {
 	this->CurrentPlayers = this->AllPlayerControllers.Num();
@@ -159,6 +175,7 @@ void ALobbyGameMode::Server_EveryoneUpdate_Implementation()
 		ALobbyPlayerSpot* LobbyPlayerSpot = PlayerController->GetPlayerSpot();
 
 		if (IsValid(LobbyPlayerSpot)) {
+
 			LobbyPlayerSpot->SetIsReady(PlayerController->PlayerSettings.bPlayerReadyState);
 			LobbyPlayerSpot->OnRep_ReadyStateUpdated();
 		}
@@ -210,8 +227,8 @@ void ALobbyGameMode::DestroyCharacterSelectedIfExits(ALobbyPlayerController* Lob
 {
     AUdemyMultiplayerCharacter* UdemyMultiplayerCharacter = LobbyPlayerController->GetCurrentCharacter();
 
-    if (IsValid(UdemyMultiplayerCharacter))
-        UdemyMultiplayerCharacter->Destroy();
+	if (IsValid(UdemyMultiplayerCharacter))
+		UdemyMultiplayerCharacter->Destroy();
 	
 	this->SpawnCharacterOnPlayerSpot(LobbyPlayerController);
 }

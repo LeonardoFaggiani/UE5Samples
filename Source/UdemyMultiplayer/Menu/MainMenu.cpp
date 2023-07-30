@@ -1,23 +1,29 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MainMenu.h"
+#include "../UdemyMultiplayerGameInstance.h"
 
 bool UMainMenu::Initialize()
 {
     if (!Super::Initialize())
         return false;
 
-    if (HostButton) {
+    if (ExitButton && HostButton && FindGamesButton) {
+        ExitButton->OnClicked.AddDynamic(this, &ThisClass::OnExitButtonClick);
         HostButton->OnClicked.AddDynamic(this, &ThisClass::OnHostButtonClicked);
-    }
-
-    if (FindGamesButton) {
         FindGamesButton->OnClicked.AddDynamic(this, &ThisClass::OnFindGamesButtonClick);
     }
 
-    if (ExitButton) {
-        ExitButton->OnClicked.AddDynamic(this, &ThisClass::OnExitButtonClick);
+    UWorld* World = GetWorld();
+
+    if (IsValid(World))
+    {
+        UGameInstance* GameInstance = World->GetGameInstance();
+
+        if (IsValid(GameInstance))
+            UdemyMultiplayerGameInstance = Cast<UUdemyMultiplayerGameInstance>(GameInstance);        
     }
+
 
     return true;
 }
@@ -31,22 +37,21 @@ void UMainMenu::NativeDestruct()
 
 void UMainMenu::OnHostButtonClicked()
 {
-    HostButton->SetIsEnabled(false);
-    
-    if (MenuInterface != nullptr) MenuInterface->Host();
+    this->UdemyMultiplayerGameInstance->SetHostGame(true);
+    this->UdemyMultiplayerGameInstance->SetFindGames(false);
+
+    this->UdemyMultiplayerGameInstance->OpenNextLevel(FName("MainMenuWidgets"), false, false, 0.1f);
+
 }
 
 void UMainMenu::OnFindGamesButtonClick()
 {
-    FindGamesButton->SetIsEnabled(false);
+    this->UdemyMultiplayerGameInstance->SetHostGame(false);
+    this->UdemyMultiplayerGameInstance->SetFindGames(true);
 
-    if (MenuInterface != nullptr) MenuInterface->Join(false);
+    this->UdemyMultiplayerGameInstance->OpenNextLevel(FName("MainMenuWidgets"), false, false, 0.1f);
 }
 
 void UMainMenu::OnExitButtonClick() {
     if (MenuInterface != nullptr) MenuInterface->Quit();
-}
-
-UWidgetSwitcher* UMainMenu::GetMenuSwitcher() {
-    return this->WidgetSwitcherMenu;
 }

@@ -3,140 +3,194 @@
 
 #include "UdemyMultiplayerGameInstance.h"
 #include "Blueprint/UserWidget.h"
-#include "Menu/CreateSession.h"
-#include "Components/WidgetSwitcher.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
 #include "UdemyMultiplayerCharacter.h"
+#include "Animation/UMGSequencePlayer.h"
+#include "Engine/EngineTypes.h"
+#include "TimerManager.h"
+
 
 UUdemyMultiplayerGameInstance::UUdemyMultiplayerGameInstance(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	static ConstructorHelpers::FClassFinder<UUserWidget> MenuBPClass(TEXT("/Game/UI/Menu/WBP_Menu"));
-	static ConstructorHelpers::FClassFinder<UUserWidget> LoadingScreenBPClass(TEXT("/Game/UI/Menu/WBP_LoadingScreen"));
+    static ConstructorHelpers::FClassFinder<UUserWidget> MenuBPClass(TEXT("/Game/UI/Menu/WBP_Menu"));
+    static ConstructorHelpers::FClassFinder<UUserWidget> LoadingScreenBPClass(TEXT("/Game/UI/Menu/WBP_LoadingScreen"));
 
-	static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WarriorBPClass(TEXT("/Game/Blueprints/Characters/BP_Warrior"));
-	static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> ArcherBPClass(TEXT("/Game/Blueprints/Characters/BP_Archer"));
-	static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WizardBPClass(TEXT("/Game/Blueprints/Characters/BP_Wizard"));
+    static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WarriorBPClass(TEXT("/Game/Blueprints/Characters/BP_Warrior"));
+    static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> ArcherBPClass(TEXT("/Game/Blueprints/Characters/BP_Archer"));
+    static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WizardBPClass(TEXT("/Game/Blueprints/Characters/BP_Wizard"));
 
-	if (!ensure(WarriorBPClass.Class != nullptr)) return;
-	if (!ensure(ArcherBPClass.Class != nullptr)) return;
-	if (!ensure(WizardBPClass.Class != nullptr)) return;
+    if (!ensure(WarriorBPClass.Class != nullptr)) return;
+    if (!ensure(ArcherBPClass.Class != nullptr)) return;
+    if (!ensure(WizardBPClass.Class != nullptr)) return;
 
-	this->Characters.Add(WarriorBPClass.Class);
-	this->Characters.Add(ArcherBPClass.Class);
-	this->Characters.Add(WizardBPClass.Class);
+    this->Characters.Add(WarriorBPClass.Class);
+    this->Characters.Add(ArcherBPClass.Class);
+    this->Characters.Add(WizardBPClass.Class);
 
-	if (!ensure(MenuBPClass.Class != nullptr)) return;
-	if (!ensure(LoadingScreenBPClass.Class != nullptr)) return;
+    if (!ensure(MenuBPClass.Class != nullptr)) return;
+    if (!ensure(LoadingScreenBPClass.Class != nullptr)) return;
 
-	MenuClass = MenuBPClass.Class;
-	LoadingScreenClass = LoadingScreenBPClass.Class;
+    MenuClass = MenuBPClass.Class;
+    LoadingScreenClass = LoadingScreenBPClass.Class;
 
-	this->InitializePlayerSpot();
+    this->InitializePlayerSpot();
 }
 
-void UUdemyMultiplayerGameInstance::LoadMenu()
-{	
-	this->InitializeMapConfigurations();
-
-	if (!ensure(MenuClass != nullptr)) return;
-	Menu = CreateWidget<UMainMenu>(this, MenuClass);
-
-	if (!ensure(Menu != nullptr)) return;
-
-	Menu->Setup();
-	Menu->SetMenuInterface(this);
-	MultiplayerSessionsSubsystem = this->GetSubsystem<UMultiplayerSessionsSubsystem>();
-}
-
-void UUdemyMultiplayerGameInstance::Host()
+void UUdemyMultiplayerGameInstance::Init()
 {
-	SetSwitchByIndex(1);	
+    Super::Init();
+
+    if (!ensure(LoadingScreenClass != nullptr)) return;
+
+    this->LoadingScreen = CreateWidget<ULoadingScreen>(this, LoadingScreenClass);
 }
 
-void UUdemyMultiplayerGameInstance::Join(bool bIsLan)
+UMainMenu* UUdemyMultiplayerGameInstance::LoadMenu()
 {
-	if (!MultiplayerSessionsSubsystem) return;
+    this->InitializeMapConfigurations();
 
-	SetSwitchByIndex(2);
+    if (!ensure(MenuClass != nullptr)) return nullptr;
+    Menu = CreateWidget<UMainMenu>(this, MenuClass);
 
-	MultiplayerSessionsSubsystem->FindSessions(50000, bIsLan);
+    if (!ensure(Menu != nullptr)) return nullptr;
+
+    Menu->Setup();
+    Menu->SetMenuInterface(this);
+    MultiplayerSessionsSubsystem = this->GetSubsystem<UMultiplayerSessionsSubsystem>();
+
+    return Menu;
 }
 
-void UUdemyMultiplayerGameInstance::GoToLobby()
+void UUdemyMultiplayerGameInstance::Join()
 {
-	UWorld* World = GetWorld();
-
-	if (World)	
-		World->ServerTravel(TEXT("/Game/ThirdPerson/Maps/Lobby?listen"));
+    MultiplayerSessionsSubsystem->FindSessions(50000, false);
 }
 
 void UUdemyMultiplayerGameInstance::Quit()
 {
-	UWorld* World = GetWorld();
+    UWorld* World = GetWorld();
 
-	if (!ensure(World != nullptr)) return;
+    if (!ensure(World != nullptr)) return;
 
-	APlayerController* PlayerController = World->GetFirstPlayerController();
+    APlayerController* PlayerController = World->GetFirstPlayerController();
 
-	if (!ensure(PlayerController != nullptr)) return;
+    if (!ensure(PlayerController != nullptr)) return;
 
-	PlayerController->ConsoleCommand("quit");
+    PlayerController->ConsoleCommand("quit");
 }
 
 void UUdemyMultiplayerGameInstance::LoadMainMenu()
 {
-	APlayerController* PlayerController = GetFirstLocalPlayerController();
+    APlayerController* PlayerController = GetFirstLocalPlayerController();
 
-	if (!ensure(PlayerController != nullptr)) return;
+    if (!ensure(PlayerController != nullptr)) return;
 
-	PlayerController->ClientTravel("/Game/ThirdPerson/Maps/MainMenu", ETravelType::TRAVEL_Absolute);
+    PlayerController->ClientTravel("/Game/ThirdPerson/Maps/MainMenu", ETravelType::TRAVEL_Absolute);
 }
 
-void UUdemyMultiplayerGameInstance::SetSwitchByIndex(int32 Index) {
+void UUdemyMultiplayerGameInstance::OpenNextLevel(FName InLevel, bool bIsListen, bool bShowLoading, float OpenLevelDelay)
+{
+    UWorld* World = GetWorld();
 
-	UWidgetSwitcher* WidgetSwitcher = Menu->GetMenuSwitcher();
+    if (World) {
 
-	WidgetSwitcher->SetActiveWidgetIndex(Index);	
+        if (bShowLoading)
+            this->ShowLoadingScreen();
+
+        FTimerHandle MemberTimerHandle;
+        FTimerDelegate TimerDel;
+
+        FString ListenLevel = bIsListen ? "listen" : "";
+
+        TimerDel.BindUFunction(this, FName("OpenLevelWithDelay"), InLevel, ListenLevel);
+
+        GetWorld()->GetTimerManager().SetTimer(MemberTimerHandle, TimerDel, OpenLevelDelay, false);
+    }
 }
 
-void UUdemyMultiplayerGameInstance::SetHostSettings(int32 NumberOfPlayers, bool bIsLan, FString serverName) {
+void UUdemyMultiplayerGameInstance::SetHostSettings(int32 NumberOfPlayers, FString serverName) {
     this->MaxPlayers = NumberOfPlayers;
-    this->bIsLAN = bIsLan;
     this->ServerName = serverName;
 }
 
-void UUdemyMultiplayerGameInstance::ShowLoadingScreen() {
+void UUdemyMultiplayerGameInstance::ShowLoadingScreen()
+{
+    if (!ensure(this->LoadingScreen != nullptr)) return;
 
-	if (!ensure(LoadingScreenClass != nullptr)) return;
-	LoadingScreen = CreateWidget<ULoadingScreen>(this, LoadingScreenClass);
+    if (!this->LoadingScreen->IsInViewport())
+        this->LoadingScreen->Setup();   
 
-	if (!ensure(LoadingScreen != nullptr)) return;
+    this->LoadingScreen->TransBounceIn();
+    this->LoadingScreen->SetMenuInterface(this);
+}
 
-	LoadingScreen->Setup();
-	LoadingScreen->SetMenuInterface(this);
+void UUdemyMultiplayerGameInstance::HideLoadingScreen()
+{
+    if (!ensure(this->LoadingScreen != nullptr)) return;
+
+    if (!this->LoadingScreen->IsInViewport())
+        this->LoadingScreen->Setup();
+
+    this->LoadingScreen->TransBounceOut();
+    this->LoadingScreen->SetMenuInterface(this);
+}
+
+void UUdemyMultiplayerGameInstance::SetHostGame(bool InbIsHostGameMenu)
+{
+    this->bIsHostGameMenu = InbIsHostGameMenu;
+}
+
+void UUdemyMultiplayerGameInstance::SetFindGames(bool InbIsFindGamesMenu)
+{
+    this->bIsFindGamesMenu = InbIsFindGamesMenu;
+}
+
+void UUdemyMultiplayerGameInstance::SetBackToMainMenu(bool InbIsBackToMainMenu)
+{
+    this->bIsBackToMainMenu = InbIsBackToMainMenu;
+}
+
+bool UUdemyMultiplayerGameInstance::GetBackToMainMenu()
+{
+    return this->bIsBackToMainMenu;
+}
+
+bool UUdemyMultiplayerGameInstance::GetFindGames()
+{
+    return this->bIsFindGamesMenu;
+}
+
+bool UUdemyMultiplayerGameInstance::GetHostGame()
+{
+    return this->bIsHostGameMenu;
+}
+
+void UUdemyMultiplayerGameInstance::OpenLevelWithDelay(FName InLevelName, FString InListen)
+{
+    UGameplayStatics::OpenLevel(GWorld, InLevelName, true, InListen);
 }
 
 void UUdemyMultiplayerGameInstance::InitializeMapConfigurations()
 {
     this->ConfigurationMaps.Add("LobbyMap", FConfigurationMaps{ TEXT("Game/ThirdPerson/Maps/ThirdPersonMap?listen"), TEXT("/Game/UI/Menu/Textures/LobbyMap"),TEXT("ThirdPersonMap"), 1 });
-	this->ConfigurationMaps.Add("CementeryMap", FConfigurationMaps{ TEXT("/Game/ThirdPerson/Maps/Cementery?listen"), TEXT("/Game/UI/Menu/Textures/CementeryMap"),TEXT("Cementery"), 2 });
-	this->ConfigurationMaps.Add("EgyptMap", FConfigurationMaps{ TEXT("/Game/ThirdPerson/Maps/Egypt?listen"), TEXT("/Game/UI/Menu/Textures/EgyptMap"),TEXT("Egypt"), 3 });
+    this->ConfigurationMaps.Add("CementeryMap", FConfigurationMaps{ TEXT("/Game/ThirdPerson/Maps/Cementery?listen"), TEXT("/Game/UI/Menu/Textures/CementeryMap"),TEXT("Cementery"), 2 });
+    this->ConfigurationMaps.Add("EgyptMap", FConfigurationMaps{ TEXT("/Game/ThirdPerson/Maps/Egypt?listen"), TEXT("/Game/UI/Menu/Textures/EgyptMap"),TEXT("Egypt"), 3 });
 }
 
 void UUdemyMultiplayerGameInstance::InitializePlayerSpot()
 {
-    this->ConfigurationPlayerSpot.Add(1, FPlayerSpot{ 1, FVector(870,290,0), FRotator(0,90,0) });
-    this->ConfigurationPlayerSpot.Add(2, FPlayerSpot{ 2, FVector(975,290,0), FRotator(0,90,0) });
-    this->ConfigurationPlayerSpot.Add(3, FPlayerSpot{ 3, FVector(1080,290,0), FRotator(0,90,0) });
-    this->ConfigurationPlayerSpot.Add(4, FPlayerSpot{ 4, FVector(1185,290,0), FRotator(0,90,0) });
+    this->ConfigurationPlayerSpot.Add(1, FPlayerSpot{ 1, FVector(790,230,0), FRotator(0,90,0) });
+    this->ConfigurationPlayerSpot.Add(2, FPlayerSpot{ 2, FVector(890,190,0), FRotator(0,90,0) });
+    this->ConfigurationPlayerSpot.Add(3, FPlayerSpot{ 3, FVector(1000,190,0), FRotator(0,90,0) });
+    this->ConfigurationPlayerSpot.Add(4, FPlayerSpot{ 4, FVector(1100,230,0), FRotator(0,90,0) });
 }
 
 void UUdemyMultiplayerGameInstance::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UUdemyMultiplayerGameInstance, MaxPlayers);
-	DOREPLIFETIME(UUdemyMultiplayerGameInstance, ServerName);
-	DOREPLIFETIME(UUdemyMultiplayerGameInstance, Characters);
+    DOREPLIFETIME(UUdemyMultiplayerGameInstance, MaxPlayers);
+    DOREPLIFETIME(UUdemyMultiplayerGameInstance, ServerName);
+    DOREPLIFETIME(UUdemyMultiplayerGameInstance, Characters);
 }

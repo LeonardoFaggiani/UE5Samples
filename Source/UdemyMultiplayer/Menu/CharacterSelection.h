@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
+#include "MenuBase.h"
 #include "../UdemyMultiplayerCharacter.h"
 #include "Animation/WidgetAnimation.h"
 #include "CharacterSelection.generated.h"
@@ -13,7 +14,7 @@
  * 
  */
 UCLASS()
-class UDEMYMULTIPLAYER_API UCharacterSelection : public UUserWidget
+class UDEMYMULTIPLAYER_API UCharacterSelection : public UMenuBase
 {
 	GENERATED_BODY()
 	
@@ -23,6 +24,7 @@ public:
 	int32 CurrentCharacterSelected;
 
 	void ToggleMenu();
+	void SetButtonEnabled(int32 InButtonIndexPressed);
 
 protected:
 	virtual bool Initialize() override;	

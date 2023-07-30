@@ -47,9 +47,13 @@ public:
 	void Server_SpawnLobbyPlayerSpot();
 	void Server_SpawnLobbyPlayerSpot_Implementation();
 
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_UpdatePlayerName();
+	void Server_UpdatePlayerName_Implementation();
+
 	FPlayerSpot* GetPlayerSpotForPlayerConnected();
 
-	UPROPERTY(Replicated)
+	UPROPERTY(BlueprintReadOnly, Replicated)
 	TArray<class ALobbyPlayerController*> AllPlayerControllers;
 	UPROPERTY(Replicated)
 	TArray<struct FLobbyPlayerInfo> ConnectedPlayers;

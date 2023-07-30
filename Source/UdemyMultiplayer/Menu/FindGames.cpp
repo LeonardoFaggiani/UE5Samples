@@ -141,7 +141,7 @@ void UFindGames::OnRefreshButtonButtonClick()
         {
             ECheckBoxState CheckBoxState = this->IsLan->GetCheckedState();
 
-            UdemyMultiplayerGameInstance->Join(ECheckBoxState::Checked == CheckBoxState ? true : false);
+            UdemyMultiplayerGameInstance->Join();
         }
     }
 }

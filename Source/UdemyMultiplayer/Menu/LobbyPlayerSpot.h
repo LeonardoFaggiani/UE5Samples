@@ -28,6 +28,10 @@ public:
 	UPROPERTY(ReplicatedUsing = OnRep_ReadyStateUpdated)
 	bool bReady;
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_SetPlayerName(const FString& InPlayerName);
+	void Multi_SetPlayerName_Implementation(const FString& InPlayerName);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

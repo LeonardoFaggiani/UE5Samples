@@ -22,9 +22,7 @@ class UDEMYMULTIPLAYER_API IMenuInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual void Host() = 0;
-	virtual void Join(bool bIsLan) = 0;
+	virtual void Join() = 0;
 	virtual void Quit() = 0;	
-	virtual void GoToLobby() = 0;
 	virtual void LoadMainMenu() = 0;
 };
