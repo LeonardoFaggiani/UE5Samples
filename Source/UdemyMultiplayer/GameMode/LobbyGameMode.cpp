@@ -54,12 +54,16 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer) {
 				LobbyPlayerController->Client_SetupLobbyMenu(UdemyMultiplayerGameInstance->ServerName);
 
 				LobbyPlayerController->Client_UpdateLobbySettings(mapImage, *DefaultMap->Name);
-				
+
 				Server_SpawnLobbyPlayerSpot();
 
                 Server_RespawnPlayer(LobbyPlayerController);
 
 				Server_EveryoneUpdate();	
+
+				FTimerHandle MemberTimerHandle;
+
+				GetWorld()->GetTimerManager().SetTimer(MemberTimerHandle, this, &ThisClass::Server_SetViewTargetSpot, 0.2f, false);
             }
         }
     }
@@ -107,6 +111,14 @@ void ALobbyGameMode::Server_UpdateGameSettings_Implementation(UTexture2D* mapIma
 	for (ALobbyPlayerController* PlayerController : this->AllPlayerControllers)
 	{
 		PlayerController->Client_UpdateLobbySettings(this->MapImage, this->MapName);
+	}
+}
+
+void ALobbyGameMode::Server_SetViewTargetSpot_Implementation()
+{
+	for (ALobbyPlayerController* PlayerController : this->AllPlayerControllers)
+	{
+		PlayerController->Client_SetViewTargetSpot();
 	}
 }
 
@@ -175,11 +187,10 @@ void ALobbyGameMode::Server_EveryoneUpdate_Implementation()
 		ALobbyPlayerSpot* LobbyPlayerSpot = PlayerController->GetPlayerSpot();
 
 		if (IsValid(LobbyPlayerSpot)) {
-
 			LobbyPlayerSpot->SetIsReady(PlayerController->PlayerSettings.bPlayerReadyState);
 			LobbyPlayerSpot->OnRep_ReadyStateUpdated();
 		}
-	}
+	}	
 }
 
 void ALobbyGameMode::LaunchTheGame() 
@@ -193,8 +204,7 @@ void ALobbyGameMode::LaunchTheGame()
 	if (World) {
 		//bUseSeamlessTravel = true;		
 		World->ServerTravel(FString(MapToTravel));
-	}
-		
+	}		
 }
 
 void ALobbyGameMode::SpawnCharacterOnPlayerSpot(ALobbyPlayerController* LobbyPlayerController)

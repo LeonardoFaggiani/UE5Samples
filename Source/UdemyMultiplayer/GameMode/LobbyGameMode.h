@@ -51,6 +51,10 @@ public:
 	void Server_UpdatePlayerName();
 	void Server_UpdatePlayerName_Implementation();
 
+	UFUNCTION(BlueprintCallable, Server, Reliable)
+	void Server_SetViewTargetSpot();
+	void Server_SetViewTargetSpot_Implementation();
+
 	FPlayerSpot* GetPlayerSpotForPlayerConnected();
 
 	UPROPERTY(BlueprintReadOnly, Replicated)

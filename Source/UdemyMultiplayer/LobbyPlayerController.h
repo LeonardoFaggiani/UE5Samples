@@ -69,13 +69,19 @@ public:
 		void Client_ShowLoadingScreen();
 		void Client_ShowLoadingScreen_Implementation();
 
+		UFUNCTION(BlueprintCallable, Client, Reliable)
+		void Client_SetViewTargetSpot();
+		void Client_SetViewTargetSpot_Implementation();
+
 	void ToggleCharacterSelectionMenu(const FInputActionValue& Value);
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 		class UInputMappingContext* LobbyPlayerControllerMappingContext;		
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-		class UInputAction* ToggleMenuAction;		
+		class UInputAction* ToggleMenuAction;
+
+		
 
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
@@ -85,6 +91,8 @@ private:
 	class UCharacterSelection* CharacterSelection;	
 	class ALobbyGameMode* LobbyGameMode;
 	class UUdemyMultiplayerGameInstance* UdemyMultiplayerGameInstance;
+	AActor* ViewTarget;
+	AActor* GetActorByName(FString InActorName);
 
 	AUdemyMultiplayerCharacter* CurrentCharacter;
 	TSubclassOf<UUserWidget> LobbyClass;

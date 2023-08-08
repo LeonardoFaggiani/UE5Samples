@@ -11,6 +11,11 @@ void ULoadingScreen::TransBounceIn()
     this->PlayAnimationForward(this->BounceInOut);
 }
 
+void ULoadingScreen::TransBounceInCompleted()
+{
+    this->PlayAnimationForward(this->BounceInCompleted);
+}
+
 void ULoadingScreen::TransBounceOut()
 {
     FTimerHandle MemberTimerHandle;

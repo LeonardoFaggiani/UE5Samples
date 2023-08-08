@@ -47,16 +47,22 @@ public:
 		void SetHostSettings(int32 NumberOfPlayers, FString ServerName);
 
 	UFUNCTION(BlueprintCallable)
-		void ShowLoadingScreen();
+		void ShowLoadingScreen(bool bWithTransition);
 
 	UFUNCTION(BlueprintCallable)
-		void HideLoadingScreen();
+		void HideLoadingScreen(bool bWithTransition);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Loading Screen")
+		void BeginLoadingScreen(const FString& MapName);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Loading Screen")
+		void EndLoadingScreen(UWorld* InLoadedWorld);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loading Screen")
+		TSubclassOf<class UUserWidget> LoadingScreenWidget;
 
 	void InitializeMapConfigurations();
 	void InitializePlayerSpot();
-	void SetHostGame(bool InbIsHostGameMenu);
-	void SetFindGames(bool InbIsFindGamesMenu);
-	
 
     TSubclassOf<UUserWidget> MenuClass;
 	TSubclassOf<UUserWidget> LoadingScreenClass;
@@ -73,6 +79,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void SetBackToMainMenu(bool InbIsBackToMainMenu);
+	UFUNCTION(BlueprintCallable)
+		void SetHostGame(bool InbIsHostGameMenu);
+	UFUNCTION(BlueprintCallable)
+		void SetFindGames(bool InbIsFindGamesMenu);
+	UFUNCTION(BlueprintCallable)
+		void StopMovie();
 
 	UFUNCTION(BlueprintCallable)
 		bool GetBackToMainMenu();
@@ -90,11 +102,10 @@ private:
 	bool bIsHostGameMenu{ false };
 	UPROPERTY()
 	bool bIsFindGamesMenu{ false };
-	UPROPERTY()
-		ULoadingScreen* LoadingScreen;
-
 	UFUNCTION()
 		void OpenLevelWithDelay(FName InLevelName, FString InListen);
+	UPROPERTY()
+		ULoadingScreen* LoadingScreen;
 
 	class UMainMenu* Menu;
 	class UMultiplayerSessionsSubsystem* MultiplayerSessionsSubsystem;

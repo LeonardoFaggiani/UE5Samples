@@ -60,6 +60,27 @@ void ALobbyPlayerController::SetupInputComponent()
     }
 }
 
+AActor* ALobbyPlayerController::GetActorByName(FString InActorName)
+{
+	TArray<AActor*> ActorsInScene{};
+
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AActor::StaticClass(), ActorsInScene);
+
+	if (ActorsInScene.Num() > 0)
+	{
+		for (AActor* actor : ActorsInScene)
+		{
+			if (actor == nullptr)
+				return nullptr;
+
+			if (actor->GetActorLabel() == InActorName)
+				return actor;
+		}
+	}
+
+	return nullptr;
+}
+
 void ALobbyPlayerController::ToggleCharacterSelectionMenu(const FInputActionValue& Value)
 {
 	if (IsValid(this->CharacterSelection))
@@ -171,7 +192,14 @@ void ALobbyPlayerController::Client_AssignPlayer_Implementation(int32 CharacterS
 
 void ALobbyPlayerController::Client_ShowLoadingScreen_Implementation() 
 {
-	UdemyMultiplayerGameInstance->ShowLoadingScreen();
+	UdemyMultiplayerGameInstance->ShowLoadingScreen(true);
+}
+
+void ALobbyPlayerController::Client_SetViewTargetSpot_Implementation()
+{
+	this->ViewTarget = GetActorByName("ViewTargetSpot");
+
+	this->SetViewTargetWithBlend(this->ViewTarget);
 }
 
 void ALobbyPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

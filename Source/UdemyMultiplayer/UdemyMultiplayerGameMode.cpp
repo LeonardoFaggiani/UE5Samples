@@ -2,14 +2,10 @@
 
 #include "UdemyMultiplayerGameMode.h"
 #include "UdemyMultiplayerCharacter.h"
+#include "LobbyPlayerController.h"
 #include "UObject/ConstructorHelpers.h"
 
 AUdemyMultiplayerGameMode::AUdemyMultiplayerGameMode()
 {
-	// set default pawn class to our Blueprinted character
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter"));
-	if (PlayerPawnBPClass.Class != NULL)
-	{
-		//DefaultPawnClass = PlayerPawnBPClass.Class;
-	}
+
 }

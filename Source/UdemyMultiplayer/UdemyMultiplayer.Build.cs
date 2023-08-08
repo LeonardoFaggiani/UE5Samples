@@ -16,7 +16,10 @@ public class UdemyMultiplayer : ModuleRules
 			"EnhancedInput", 
 			"MultiplayerSessions", 
 			"OnlineSubsystem", 
-			"SlateCore"
+			"SlateCore",
+			"MoviePlayer",
+			"UMG",
+			"Slate"
 		});
     }
 }

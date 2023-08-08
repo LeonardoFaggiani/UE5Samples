@@ -22,8 +22,12 @@ public:
 	void TransBounceIn();
 	UFUNCTION(BlueprintCallable)
 	void TransBounceOut();
+	UFUNCTION(BlueprintCallable)
+	void TransBounceInCompleted();
 
 private:
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 		UWidgetAnimation* BounceInOut;
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+		UWidgetAnimation* BounceInCompleted;
 };
