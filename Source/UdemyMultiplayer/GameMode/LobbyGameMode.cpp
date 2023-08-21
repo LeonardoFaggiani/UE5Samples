@@ -2,15 +2,15 @@
 
 
 #include "LobbyGameMode.h"
-#include "../LobbyPlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Math/UnrealMathUtility.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/PlayerState.h"
+#include "GameFramework/GameStateBase.h"
+#include "../LobbyPlayerController.h"
 #include "../UdemyMultiplayerGameInstance.h"
 #include "../UdemyMultiplayerCharacter.h"
-#include "GameFramework/PlayerState.h"
 #include "../Menu/LobbyPlayerSpot.h"
-#include "GameFramework/GameStateBase.h"
 #include "../UdemyMultiplayerPlayerState.h"
 
 
@@ -26,7 +26,7 @@ ALobbyGameMode::ALobbyGameMode(const FObjectInitializer& ObjectInitializer) : Su
 
 		if (IsValid(GameInstance)) {
 			UdemyMultiplayerGameInstance = Cast<UUdemyMultiplayerGameInstance>(GameInstance);
-			DefaultCharacterChampion = UdemyMultiplayerGameInstance->Characters[0];
+			DefaultCharacterChampion = UdemyMultiplayerGameInstance->GetHeroeByName("Warrior");
 		}
     }
 }
@@ -92,14 +92,15 @@ bool ALobbyGameMode::IsAllPlayerReady()
 	return true;
 }
 
-void ALobbyGameMode::Server_SwapCharacter_Implementation(APlayerController* PlayerController, int32 playerCharacterIndex, bool bChangeStatus)
+void ALobbyGameMode::Server_SwapCharacter_Implementation(APlayerController* PlayerController, TSubclassOf<AUdemyMultiplayerCharacter> InHeroeSelected, bool bChangeStatus)
 {
     if (!bChangeStatus) {
-        if (UdemyMultiplayerGameInstance->Characters.IsValidIndex(playerCharacterIndex)) {
-			ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(PlayerController);
-            this->DefaultCharacterChampion = UdemyMultiplayerGameInstance->Characters[playerCharacterIndex];
-            this->DestroyCharacterSelectedIfExits(LobbyPlayerController);
-        }
+		
+		ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(PlayerController);
+		
+		this->DefaultCharacterChampion = InHeroeSelected;
+		
+		this->DestroyCharacterSelectedIfExits(LobbyPlayerController);       
     }
 }
 
@@ -153,18 +154,16 @@ void ALobbyGameMode::Server_RespawnPlayer_Implementation(ALobbyPlayerController*
 
 void ALobbyGameMode::Server_UpdatePlayerName_Implementation()
 {
-    for (ALobbyPlayerController* PlayerController : this->AllPlayerControllers)
+    for (ALobbyPlayerController* LobbyPlayerController : this->AllPlayerControllers)
     {
-        ALobbyPlayerSpot* LobbyPlayerSpot = PlayerController->GetPlayerSpot();
+        AUdemyMultiplayerPlayerState* UdemyMultiplayerPlayerState = LobbyPlayerController->GetPlayerState<AUdemyMultiplayerPlayerState>();
 
-        AUdemyMultiplayerPlayerState* UdemyMultiplayerPlayerState = PlayerController->GetPlayerState<AUdemyMultiplayerPlayerState>();
+		AUdemyMultiplayerCharacter* UdemyMultiplayerCharacter = LobbyPlayerController->GetCurrentCharacter();
 
-        if (IsValid(LobbyPlayerSpot) && IsValid(UdemyMultiplayerPlayerState)) {
-
-            PlayerController->PlayerSettings.PlayerName = UdemyMultiplayerPlayerState->GetPlayerName();
-
-            LobbyPlayerSpot->Multi_SetPlayerName(PlayerController->PlayerSettings.PlayerName);
-        }
+		if (IsValid(UdemyMultiplayerCharacter) && IsValid(UdemyMultiplayerPlayerState)) {
+			LobbyPlayerController->PlayerSettings.PlayerName = UdemyMultiplayerPlayerState->GetPlayerName();
+			UdemyMultiplayerCharacter->Multi_SetPlayerName(LobbyPlayerController->PlayerSettings.PlayerName);
+		}		
     }
 }
 
@@ -175,22 +174,22 @@ void ALobbyGameMode::Server_EveryoneUpdate_Implementation()
 	if (this->CurrentPlayers > 0)	
 		this->ConnectedPlayers.Empty();
 
-	for (ALobbyPlayerController* PlayerController : this->AllPlayerControllers)
+	for (ALobbyPlayerController* LobbyPlayerController : this->AllPlayerControllers)
 	{
-		this->ConnectedPlayers.Add(PlayerController->PlayerSettings);
+		this->ConnectedPlayers.Add(LobbyPlayerController->PlayerSettings);
 	}
 
-	for (ALobbyPlayerController* PlayerController : this->AllPlayerControllers)
+	for (ALobbyPlayerController* LobbyPlayerController : this->AllPlayerControllers)
 	{		
-		PlayerController->Client_UpdateNumberOfPlayers(this->CurrentPlayers, this->MaxPlayers);
+		LobbyPlayerController->Client_UpdateNumberOfPlayers(this->CurrentPlayers, this->MaxPlayers);
 
-		ALobbyPlayerSpot* LobbyPlayerSpot = PlayerController->GetPlayerSpot();
+		AUdemyMultiplayerCharacter* UdemyMultiplayerCharacter = LobbyPlayerController->GetCurrentCharacter();
 
-		if (IsValid(LobbyPlayerSpot)) {
-			LobbyPlayerSpot->SetIsReady(PlayerController->PlayerSettings.bPlayerReadyState);
-			LobbyPlayerSpot->OnRep_ReadyStateUpdated();
+		if (IsValid(UdemyMultiplayerCharacter)) {
+			UdemyMultiplayerCharacter->SetIsReady(LobbyPlayerController->PlayerSettings.bPlayerReadyState);
+			UdemyMultiplayerCharacter->OnRep_ReadyStateUpdated();
 		}
-	}	
+	}
 }
 
 void ALobbyGameMode::LaunchTheGame() 

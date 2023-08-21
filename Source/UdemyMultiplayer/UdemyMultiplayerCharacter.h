@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Components/WidgetComponent.h"
 #include "UdemyMultiplayerCharacter.generated.h"
 
 UCLASS(config=Game)
@@ -36,9 +37,22 @@ class AUdemyMultiplayerCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		UWidgetComponent* OverheadPlayerSpot;
+
 public:
 	AUdemyMultiplayerCharacter();
-	
+	void SetIsReady(bool InbReady);
+
+	UFUNCTION()
+		void OnRep_ReadyStateUpdated();
+
+	UPROPERTY(ReplicatedUsing = OnRep_ReadyStateUpdated)
+		bool bReady;
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_SetPlayerName(const FString& InPlayerName);
+	void Multi_SetPlayerName_Implementation(const FString& InPlayerName);
 
 protected:
 

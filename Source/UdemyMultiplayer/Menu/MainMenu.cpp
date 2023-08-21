@@ -9,9 +9,9 @@ bool UMainMenu::Initialize()
         return false;
 
     if (ExitButton && HostButton && FindGamesButton) {
-        ExitButton->OnClicked.AddDynamic(this, &ThisClass::OnExitButtonClick);
-        HostButton->OnClicked.AddDynamic(this, &ThisClass::OnHostButtonClicked);
-        FindGamesButton->OnClicked.AddDynamic(this, &ThisClass::OnFindGamesButtonClick);
+        HostButton->OnClicked().AddUObject(this, &ThisClass::OnHostButtonClicked);
+        FindGamesButton->OnClicked().AddUObject(this, &ThisClass::OnFindGamesButtonClick);
+        ExitButton->OnClicked().AddUObject(this, &ThisClass::OnExitButtonClick);
     }
 
     UWorld* World = GetWorld();

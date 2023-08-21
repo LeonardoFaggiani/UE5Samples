@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "../../UdemyMultiplayerCharacter.h"
 #include "LobbyPlayerInfo.generated.h"
 
 USTRUCT(BlueprintType)
@@ -21,5 +22,5 @@ public:
         FString PlayerName;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lobby Player Info")
-        int32 PlayerCharacterIndex;
+        TSubclassOf<AUdemyMultiplayerCharacter> HeroeSelected;
 };

@@ -28,11 +28,11 @@ bool ULobby::Initialize()
         }
     }
 
-    if (ReadyButton && PlayButton && PreviousMap && NextMap) {
+    if (ReadyButton && ReadyUpButton && PreviousMap && NextMap && HeroesButton) {
 
-        ReadyButton->OnClicked.AddDynamic(this, &ULobby::OnReadyButtonClicked);
-        PlayButton->OnClicked.AddDynamic(this, &ULobby::OnPlayButtonClicked);
-        //BackMainMenuButton->OnClicked.AddDynamic(this, &ULobby::OnBackMainMenuButtonClicked);
+        ReadyUpButton->OnClicked().AddUObject(this, &ThisClass::OnPlayButtonClicked);
+        ReadyButton->OnClicked().AddUObject(this, &ThisClass::OnReadyButtonClicked);
+        HeroesButton->OnClicked().AddUObject(this, &ThisClass::OnHeroesButtonClicked);
 
         PreviousMap->OnClicked.AddDynamic(this, &ULobby::OnPreviousMapButtonClicked);
         NextMap->OnClicked.AddDynamic(this, &ULobby::OnNextMapButtonClicked);
@@ -54,10 +54,10 @@ void ULobby::ShowOrHideButton() {
     if (World == nullptr)
         return;
 
-    if (ReadyButton && PlayButton && PreviousMap && NextMap) {
+    if (ReadyUpButton && ReadyButton && PreviousMap && NextMap) {
 
-        if (!World->IsServer()) {
-            this->PlayButton->SetVisibility(ESlateVisibility::Hidden);
+        if (!GetWorld()->IsServer()) {
+            this->ReadyUpButton->SetVisibility(ESlateVisibility::Hidden);
             this->ReadyButton->SetVisibility(ESlateVisibility::Visible);
 
             this->PreviousMap->SetVisibility(ESlateVisibility::Collapsed);
@@ -81,6 +81,15 @@ void ULobby::OnPlayButtonClicked()
     }    
 }
 
+void ULobby::OnHeroesButtonClicked()
+{
+    UHeroeSelection* InHeroeSelection = CreateWidget<UHeroeSelection>(this, this->HeroeSelection);
+
+    InHeroeSelection->Setup();
+
+    this->SetHiddenHeroesButton(true);
+}
+
 void ULobby::OnReadyButtonClicked()
 {
     UpdateStatus();
@@ -100,8 +109,13 @@ void ULobby::UpdateStatus()
     }
 }
 
+void ULobby::SetHiddenHeroesButton(bool bHidden) {
+    this->HeroesButton->SetVisibility(bHidden ? ESlateVisibility::Hidden : ESlateVisibility::Visible);
+}
+
+
 void ULobby::SetEnablePlayButton(bool bEnabled) {
-    this->PlayButton->SetIsEnabled(bEnabled);
+    this->ReadyUpButton->SetIsEnabled(bEnabled);
 }
 
 void ULobby::OnPreviousMapButtonClicked()

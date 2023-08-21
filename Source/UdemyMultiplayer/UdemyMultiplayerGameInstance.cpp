@@ -5,39 +5,20 @@
 #include "Blueprint/UserWidget.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/GameplayStatics.h"
-#include "UdemyMultiplayerCharacter.h"
 #include "Animation/UMGSequencePlayer.h"
 #include "Engine/EngineTypes.h"
 #include "TimerManager.h"
 #include "Runtime/UMG/Public/UMG.h"
+#include "UdemyMultiplayerCharacter.h"
 #include "Slate.h"
 #include "MoviePlayer.h"
-
-
+#include "Menu/Enum/AttributeType.h"
+#include "Menu/Struct/HeroeAttribute.h"
 
 UUdemyMultiplayerGameInstance::UUdemyMultiplayerGameInstance(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-    static ConstructorHelpers::FClassFinder<UUserWidget> MenuBPClass(TEXT("/Game/UI/Menu/WBP_Menu"));
-    static ConstructorHelpers::FClassFinder<UUserWidget> LoadingScreenBPClass(TEXT("/Game/UI/Menu/WBP_LoadingScreen"));
 
-    static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WarriorBPClass(TEXT("/Game/Blueprints/Characters/BP_Warrior"));
-    static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> ArcherBPClass(TEXT("/Game/Blueprints/Characters/BP_Archer"));
-    static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WizardBPClass(TEXT("/Game/Blueprints/Characters/BP_Wizard"));
-
-    if (!ensure(WarriorBPClass.Class != nullptr)) return;
-    if (!ensure(ArcherBPClass.Class != nullptr)) return;
-    if (!ensure(WizardBPClass.Class != nullptr)) return;
-
-    this->Characters.Add(WarriorBPClass.Class);
-    this->Characters.Add(ArcherBPClass.Class);
-    this->Characters.Add(WizardBPClass.Class);
-
-    if (!ensure(MenuBPClass.Class != nullptr)) return;
-    if (!ensure(LoadingScreenBPClass.Class != nullptr)) return;
-
-    MenuClass = MenuBPClass.Class;
-    LoadingScreenClass = LoadingScreenBPClass.Class;
-
+    this->InitializeChampions();
     this->InitializePlayerSpot();
 }
 
@@ -47,7 +28,7 @@ void UUdemyMultiplayerGameInstance::Init()
 
     FCoreUObjectDelegates::PreLoadMap.AddUObject(this, &UUdemyMultiplayerGameInstance::BeginLoadingScreen);
     FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UUdemyMultiplayerGameInstance::EndLoadingScreen);    
-    
+
     if (!ensure(LoadingScreenClass != nullptr)) return;
 
     this->LoadingScreen = CreateWidget<ULoadingScreen>(this, LoadingScreenClass);
@@ -64,7 +45,6 @@ UMainMenu* UUdemyMultiplayerGameInstance::LoadMenu()
 
     Menu->Setup();
     Menu->SetMenuInterface(this);
-    MultiplayerSessionsSubsystem = this->GetSubsystem<UMultiplayerSessionsSubsystem>();
 
     return Menu;
 }
@@ -73,8 +53,6 @@ void UUdemyMultiplayerGameInstance::BeginLoadingScreen_Implementation(const FStr
 {
     if (InMapName == "/Game/ThirdPerson/Maps/LobbyChampionSelection")
     {
-        UUserWidget* UserWidget = CreateWidget<UUserWidget>(this, LoadingScreenWidget);
-
         FLoadingScreenAttributes LoadingScreenAttributes;
         LoadingScreenAttributes.MinimumLoadingScreenDisplayTime = 1;
         LoadingScreenAttributes.bAutoCompleteWhenLoadingCompletes = false;
@@ -94,9 +72,35 @@ void UUdemyMultiplayerGameInstance::EndLoadingScreen_Implementation(UWorld* InLo
     }
 }
 
-void UUdemyMultiplayerGameInstance::Join()
-{
-    MultiplayerSessionsSubsystem->FindSessions(50000, false);
+void UUdemyMultiplayerGameInstance::InitializeChampions() {
+
+    static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WarriorBPClass(TEXT("/Game/Blueprints/Characters/BP_Warrior"));
+    static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> ArcherBPClass(TEXT("/Game/Blueprints/Characters/BP_Archer"));
+    static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WizardBPClass(TEXT("/Game/Blueprints/Characters/BP_Wizard"));
+
+    if (!ensure(WarriorBPClass.Class != nullptr)) return;
+    if (!ensure(ArcherBPClass.Class != nullptr)) return;
+    if (!ensure(WizardBPClass.Class != nullptr)) return;
+
+    TArray<FHeroeAttribute> WarriorAttributes;
+    TArray<FHeroeAttribute> ArcherAttributes;
+    TArray<FHeroeAttribute> WizardAttributes;
+
+    WarriorAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/sword-icon"), EAttributeType::Attack, 25 });
+    WarriorAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/shield-icon"), EAttributeType::Armor, 60 });
+    WarriorAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/healthpoints-icon"), EAttributeType::Health, 600 });
+    
+    ArcherAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/bow-icon"), EAttributeType::Attack, 45 });
+    ArcherAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/shield-icon"), EAttributeType::Armor, 30 });
+    ArcherAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/healthpoints-icon"), EAttributeType::Health, 300 });
+    
+    WizardAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/magic-staff-icon"), EAttributeType::Attack, 60 });
+    WizardAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/shield-icon"), EAttributeType::Armor, 20 });
+    WizardAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/healthpoints-icon"), EAttributeType::Health, 200 });
+
+    this->HeroeResources.Add(FHeroeResources{ "Warrior", WarriorBPClass.Class, TEXT("/Game/UI/Materials/Textures/Warrior"), WarriorAttributes });
+    this->HeroeResources.Add(FHeroeResources{ "Archer", ArcherBPClass.Class, TEXT("/Game/UI/Materials/Textures/Archer"), ArcherAttributes });
+    this->HeroeResources.Add(FHeroeResources{ "Wizard", WizardBPClass.Class, TEXT("/Game/UI/Materials/Textures/Wizard"), WizardAttributes });
 }
 
 void UUdemyMultiplayerGameInstance::Quit()
@@ -202,7 +206,17 @@ bool UUdemyMultiplayerGameInstance::GetHostGame()
 void UUdemyMultiplayerGameInstance::StopMovie()
 {    
     GetMoviePlayer()->StopMovie();   
-    //HideLoadingScreen();
+}
+
+TSubclassOf<AUdemyMultiplayerCharacter> UUdemyMultiplayerGameInstance::GetHeroeByName(FString InHeroeName)
+{
+    auto GetHeroeByName = [InHeroeName](const FHeroeResources& Heroe) {
+        return Heroe.Name == InHeroeName;
+    };
+
+    auto InHeroeResource = this->HeroeResources.FindByPredicate(GetHeroeByName);
+
+    return InHeroeResource->TargetClass;
 }
 
 void UUdemyMultiplayerGameInstance::OpenLevelWithDelay(FName InLevelName, FString InListen)
@@ -231,5 +245,4 @@ void UUdemyMultiplayerGameInstance::GetLifetimeReplicatedProps(TArray<FLifetimeP
 
     DOREPLIFETIME(UUdemyMultiplayerGameInstance, MaxPlayers);
     DOREPLIFETIME(UUdemyMultiplayerGameInstance, ServerName);
-    DOREPLIFETIME(UUdemyMultiplayerGameInstance, Characters);
 }

@@ -6,9 +6,11 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
+#include "Net/UnrealNetwork.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "Menu/OverheadPlayerSpot.h"
 
 //////////////////////////////////////////////////////////////////////////
 // AUdemyMultiplayerCharacter
@@ -49,6 +51,11 @@ AUdemyMultiplayerCharacter::AUdemyMultiplayerCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+
+	this->SetIsReady(true);
+
+	OverheadPlayerSpot = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadPlayerSpot"));
+	OverheadPlayerSpot->SetupAttachment(RootComponent);
 }
 
 void AUdemyMultiplayerCharacter::BeginPlay()
@@ -122,4 +129,32 @@ void AUdemyMultiplayerCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void AUdemyMultiplayerCharacter::SetIsReady(bool InbReady)
+{
+	this->bReady = InbReady;
+}
+
+void AUdemyMultiplayerCharacter::OnRep_ReadyStateUpdated()
+{ 
+	UOverheadPlayerSpot* InOverheadPlayerSpot = Cast<UOverheadPlayerSpot>(this->OverheadPlayerSpot->GetUserWidgetObject());
+
+	if (IsValid(InOverheadPlayerSpot))
+		InOverheadPlayerSpot->SetReadyStatus(this->bReady);
+}
+
+void AUdemyMultiplayerCharacter::Multi_SetPlayerName_Implementation(const FString& InPlayerName)
+{
+	UOverheadPlayerSpot* InOverheadPlayerSpot = Cast<UOverheadPlayerSpot>(this->OverheadPlayerSpot->GetUserWidgetObject());
+
+	if (IsValid(InOverheadPlayerSpot))
+		InOverheadPlayerSpot->SetPlayerName(InPlayerName);
+}
+
+void AUdemyMultiplayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AUdemyMultiplayerCharacter, bReady);
 }

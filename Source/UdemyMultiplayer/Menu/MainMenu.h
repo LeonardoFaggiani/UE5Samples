@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/Button.h"
 #include "MenuBase.h"
+#include "CommonButtonBase.h"
 #include "MainMenu.generated.h"
 
 /**
@@ -20,14 +21,14 @@ protected:
 	virtual bool Initialize();
 	virtual void NativeDestruct() override;
 
-	UPROPERTY(meta = (BindWidget))
-		class UButton* ExitButton;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
+		TObjectPtr<UCommonButtonBase> HostButton;
 
-	UPROPERTY(meta = (BindWidget))
-		class UButton* HostButton;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
+		TObjectPtr<UCommonButtonBase> FindGamesButton;
 
-	UPROPERTY(meta = (BindWidget))
-		class UButton* FindGamesButton;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
+		TObjectPtr<UCommonButtonBase> ExitButton;
 
 	UFUNCTION() void OnHostButtonClicked();
 	UFUNCTION() void OnFindGamesButtonClick();

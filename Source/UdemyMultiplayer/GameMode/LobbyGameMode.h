@@ -28,8 +28,8 @@ public:
 	bool IsAllPlayerReady();
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
-	void Server_SwapCharacter(APlayerController* PlayerController, int32 playerCharacterIndex,  bool bChangeStatus);
-	void Server_SwapCharacter_Implementation(APlayerController* PlayerController, int32 playerCharacterIndex, bool bChangeStatus);
+	void Server_SwapCharacter(APlayerController* PlayerController, TSubclassOf<AUdemyMultiplayerCharacter> InHeroeSelected,  bool bChangeStatus);
+	void Server_SwapCharacter_Implementation(APlayerController* PlayerController, TSubclassOf<AUdemyMultiplayerCharacter> InHeroeSelected, bool bChangeStatus);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 	void Server_UpdateGameSettings(UTexture2D* mapImage, const FString& mapName);

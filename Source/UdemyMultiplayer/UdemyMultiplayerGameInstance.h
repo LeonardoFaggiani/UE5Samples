@@ -6,17 +6,14 @@
 #include "Engine/GameInstance.h"
 #include "Menu/MenuInterface.h"
 #include "Blueprint/UserWidget.h"
-#include "MultiplayerSessions/public/MultiplayerSessionsSubsystem.h"
 #include "Menu/Struct/ConfigurationMaps.h"
 #include "Menu/Struct/PlayerSpot.h"
 #include "Menu/MainMenu.h"
 #include "Menu/LoadingScreen.h"
 #include "Engine/LevelScriptActor.h"
+#include "Menu/Struct/HeroeResources.h"
 #include "UdemyMultiplayerGameInstance.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class UDEMYMULTIPLAYER_API UUdemyMultiplayerGameInstance : public UGameInstance, public IMenuInterface
 {
@@ -30,9 +27,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		UMainMenu* LoadMenu();
-
-	UFUNCTION(Exec)
-		virtual void Join() override;
 
 	UFUNCTION(Exec)
 		virtual void Quit() override;
@@ -58,31 +52,15 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Loading Screen")
 		void EndLoadingScreen(UWorld* InLoadedWorld);
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loading Screen")
-		TSubclassOf<class UUserWidget> LoadingScreenWidget;
-
-	void InitializeMapConfigurations();
-	void InitializePlayerSpot();
-
-    TSubclassOf<UUserWidget> MenuClass;
-	TSubclassOf<UUserWidget> LoadingScreenClass;
-
-    TMap<FString, FConfigurationMaps> ConfigurationMaps;
-	TMap<int32, FPlayerSpot> ConfigurationPlayerSpot;
-
-    UPROPERTY(Replicated)
-        int32 MaxPlayers;
-    UPROPERTY(Replicated)
-        FString ServerName;
-	UPROPERTY(Replicated)
-		TArray<TSubclassOf<class AUdemyMultiplayerCharacter>> Characters;
-
 	UFUNCTION(BlueprintCallable)
 		void SetBackToMainMenu(bool InbIsBackToMainMenu);
+
 	UFUNCTION(BlueprintCallable)
 		void SetHostGame(bool InbIsHostGameMenu);
+
 	UFUNCTION(BlueprintCallable)
 		void SetFindGames(bool InbIsFindGamesMenu);
+
 	UFUNCTION(BlueprintCallable)
 		void StopMovie();
 
@@ -94,6 +72,26 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		bool GetHostGame();
+
+	void InitializeMapConfigurations();
+	void InitializePlayerSpot();
+	void InitializeChampions();
+
+    TMap<FString, FConfigurationMaps> ConfigurationMaps;
+	TMap<int32, FPlayerSpot> ConfigurationPlayerSpot;
+
+	UPROPERTY(EditAnyWhere)
+		TSubclassOf<UMainMenu> MenuClass;
+	UPROPERTY(EditAnyWhere)
+		TSubclassOf<ULoadingScreen> LoadingScreenClass;
+    UPROPERTY(Replicated)
+        int32 MaxPlayers;
+    UPROPERTY(Replicated)
+        FString ServerName;
+	UPROPERTY()
+		TArray<FHeroeResources> HeroeResources;
+	UFUNCTION()
+		TSubclassOf<AUdemyMultiplayerCharacter> GetHeroeByName(FString InHeroeName);
 
 private:
 	UPROPERTY()
@@ -108,5 +106,4 @@ private:
 		ULoadingScreen* LoadingScreen;
 
 	class UMainMenu* Menu;
-	class UMultiplayerSessionsSubsystem* MultiplayerSessionsSubsystem;
 };

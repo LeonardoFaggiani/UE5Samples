@@ -9,10 +9,12 @@
 #include "Components/Image.h"
 #include "Components/Button.h"
 #include "Components/Overlay.h"
+#include "CommonButtonBase.h"
 #include "MenuBase.h"
 #include "../Menu/Struct/LobbyPlayerInfo.h"
 #include "../Menu/Struct/ConfigurationMaps.h"
 #include "../UdemyMultiplayerGameInstance.h"
+#include "HeroeSelection.h"
 #include "PlayerLobbyList.h"
 #include "Lobby.generated.h"
 
@@ -36,10 +38,14 @@ public:
 	void SetMap(UTexture2D* mapImage, FString mapName);
 	void ShowOrHideButton();
 	void SetEnablePlayButton(bool bEnabled);
+	void SetHiddenHeroesButton(bool bHidden);
 
 protected:
 
 	virtual bool Initialize() override;
+
+	UPROPERTY(EditAnyWhere)
+		TSubclassOf<UHeroeSelection> HeroeSelection;
 
 	UPROPERTY(meta = (BindWidget))
 		class UTextBlock* CurrentPlayersFormat;
@@ -47,12 +53,15 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 		class UTextBlock* ServerName;
 
-	UPROPERTY(meta = (BindWidget))
-		class UButton* ReadyButton;
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
+		TObjectPtr<UCommonButtonBase> ReadyButton;
 
-	UPROPERTY(meta = (BindWidget))
-		class UButton* PlayButton;
-	
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
+		TObjectPtr<UCommonButtonBase> ReadyUpButton;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
+		TObjectPtr<UCommonButtonBase> HeroesButton;
+
 	UPROPERTY(Replicated, meta = (BindWidget))
 		class UImage* MapImage;
 
@@ -65,17 +74,14 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 		class UButton* NextMap;
 
-	UFUNCTION()
-		void OnReadyButtonClicked();	
-	UFUNCTION() 
-		void OnPlayButtonClicked();
-	UFUNCTION() 
-		void OnPreviousMapButtonClicked();
-	UFUNCTION() 
-		void OnNextMapButtonClicked();
+	UFUNCTION() void OnReadyButtonClicked();	
+	UFUNCTION() void OnPlayButtonClicked();
+	UFUNCTION() void OnPreviousMapButtonClicked();
+	UFUNCTION() void OnNextMapButtonClicked();
+	UFUNCTION() void OnHeroesButtonClicked();
 
 private:
-	void InitializeMap();
+	void InitializeMap();	
 	FConfigurationMaps* GetCurrentMapByName(FString Name);
 	FConfigurationMaps* GetPreviousNextMap(bool IsIncrement);
 	void NotifyMapChaged();

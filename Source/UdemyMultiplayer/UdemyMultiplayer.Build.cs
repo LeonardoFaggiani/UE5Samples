@@ -14,12 +14,16 @@ public class UdemyMultiplayer : ModuleRules
 			"InputCore", 
 			"HeadMountedDisplay", 
 			"EnhancedInput", 
-			"MultiplayerSessions", 
 			"OnlineSubsystem", 
 			"SlateCore",
-			"MoviePlayer",
-			"UMG",
-			"Slate"
+			"MoviePlayer"
 		});
+
+        PrivateDependencyModuleNames.AddRange(
+                new string[] {
+                "UMG",
+                "Slate",
+				"CommonUI"
+                });
     }
 }
