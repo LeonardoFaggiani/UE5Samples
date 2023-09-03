@@ -18,7 +18,7 @@
 UUdemyMultiplayerGameInstance::UUdemyMultiplayerGameInstance(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 
-    this->InitializeChampions();
+    this->InitializeHeroes();
     this->InitializePlayerSpot();
 }
 
@@ -26,8 +26,8 @@ void UUdemyMultiplayerGameInstance::Init()
 {
     Super::Init();
 
-    FCoreUObjectDelegates::PreLoadMap.AddUObject(this, &UUdemyMultiplayerGameInstance::BeginLoadingScreen);
-    FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UUdemyMultiplayerGameInstance::EndLoadingScreen);    
+/*    FCoreUObjectDelegates::PreLoadMap.AddUObject(this, &UUdemyMultiplayerGameInstance::BeginLoadingScreen);
+    FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UUdemyMultiplayerGameInstance::EndLoadingScreen);   */ 
 
     if (!ensure(LoadingScreenClass != nullptr)) return;
 
@@ -36,8 +36,6 @@ void UUdemyMultiplayerGameInstance::Init()
 
 UMainMenu* UUdemyMultiplayerGameInstance::LoadMenu()
 {
-    this->InitializeMapConfigurations();
-
     if (!ensure(MenuClass != nullptr)) return nullptr;
     Menu = CreateWidget<UMainMenu>(this, MenuClass);
 
@@ -53,15 +51,15 @@ void UUdemyMultiplayerGameInstance::BeginLoadingScreen_Implementation(const FStr
 {
     if (InMapName == "/Game/ThirdPerson/Maps/LobbyChampionSelection")
     {
-        FLoadingScreenAttributes LoadingScreenAttributes;
-        LoadingScreenAttributes.MinimumLoadingScreenDisplayTime = 1;
-        LoadingScreenAttributes.bAutoCompleteWhenLoadingCompletes = false;
-        LoadingScreenAttributes.bMoviesAreSkippable = false;
-        LoadingScreenAttributes.bWaitForManualStop = true;
-        LoadingScreenAttributes.bAllowEngineTick = true;
-        LoadingScreenAttributes.WidgetLoadingScreen = this->LoadingScreen->TakeWidget();
+        //FLoadingScreenAttributes LoadingScreenAttributes;
+        //LoadingScreenAttributes.MinimumLoadingScreenDisplayTime = 3;
+        //LoadingScreenAttributes.bAutoCompleteWhenLoadingCompletes = false;
+        //LoadingScreenAttributes.bMoviesAreSkippable = false;
+        //LoadingScreenAttributes.bWaitForManualStop = true;
+        //LoadingScreenAttributes.bAllowEngineTick = true;        
+        //LoadingScreenAttributes.WidgetLoadingScreen = this->LoadingScreen->TakeWidget();         
 
-        GetMoviePlayer()->SetupLoadingScreen(LoadingScreenAttributes);
+        //GetMoviePlayer()->SetupLoadingScreen(LoadingScreenAttributes);
     }
 }
 
@@ -72,7 +70,7 @@ void UUdemyMultiplayerGameInstance::EndLoadingScreen_Implementation(UWorld* InLo
     }
 }
 
-void UUdemyMultiplayerGameInstance::InitializeChampions() {
+void UUdemyMultiplayerGameInstance::InitializeHeroes() {
 
     static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> WarriorBPClass(TEXT("/Game/Blueprints/Characters/BP_Warrior"));
     static ConstructorHelpers::FClassFinder<AUdemyMultiplayerCharacter> ArcherBPClass(TEXT("/Game/Blueprints/Characters/BP_Archer"));
@@ -88,15 +86,15 @@ void UUdemyMultiplayerGameInstance::InitializeChampions() {
 
     WarriorAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/sword-icon"), EAttributeType::Attack, 25 });
     WarriorAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/shield-icon"), EAttributeType::Armor, 60 });
-    WarriorAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/healthpoints-icon"), EAttributeType::Health, 600 });
+    WarriorAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/healtpoints-icon"), EAttributeType::Health, 600 });
     
     ArcherAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/bow-icon"), EAttributeType::Attack, 45 });
     ArcherAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/shield-icon"), EAttributeType::Armor, 30 });
-    ArcherAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/healthpoints-icon"), EAttributeType::Health, 300 });
-    
+    ArcherAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/healtpoints-icon"), EAttributeType::Health, 300 });
+
     WizardAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/magic-staff-icon"), EAttributeType::Attack, 60 });
     WizardAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/shield-icon"), EAttributeType::Armor, 20 });
-    WizardAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/healthpoints-icon"), EAttributeType::Health, 200 });
+    WizardAttributes.Add(FHeroeAttribute{ TEXT("/Game/UI/Materials/Textures/healtpoints-icon"), EAttributeType::Health, 200 });
 
     this->HeroeResources.Add(FHeroeResources{ "Warrior", WarriorBPClass.Class, TEXT("/Game/UI/Materials/Textures/Warrior"), WarriorAttributes });
     this->HeroeResources.Add(FHeroeResources{ "Archer", ArcherBPClass.Class, TEXT("/Game/UI/Materials/Textures/Archer"), ArcherAttributes });
@@ -116,21 +114,12 @@ void UUdemyMultiplayerGameInstance::Quit()
     PlayerController->ConsoleCommand("quit");
 }
 
-void UUdemyMultiplayerGameInstance::LoadMainMenu()
-{
-    APlayerController* PlayerController = GetFirstLocalPlayerController();
-
-    if (!ensure(PlayerController != nullptr)) return;
-
-    PlayerController->ClientTravel("/Game/ThirdPerson/Maps/MainMenu", ETravelType::TRAVEL_Absolute);
-}
-
 void UUdemyMultiplayerGameInstance::OpenNextLevel(FName InLevel, bool bIsListen, bool bShowLoading, float OpenLevelDelay)
 {
     UWorld* World = GetWorld();
 
     if (World) {
-
+        
         if (bShowLoading)
             this->ShowLoadingScreen(true);
 
@@ -188,6 +177,11 @@ void UUdemyMultiplayerGameInstance::SetBackToMainMenu(bool InbIsBackToMainMenu)
     this->bIsBackToMainMenu = InbIsBackToMainMenu;
 }
 
+void UUdemyMultiplayerGameInstance::SetOptionsMenu(bool InbIsOptionsMenu)
+{
+    this->bIsOptionsMenu = InbIsOptionsMenu;
+}
+
 bool UUdemyMultiplayerGameInstance::GetBackToMainMenu()
 {
     return this->bIsBackToMainMenu;
@@ -202,6 +196,12 @@ bool UUdemyMultiplayerGameInstance::GetHostGame()
 {
     return this->bIsHostGameMenu;
 }
+
+bool UUdemyMultiplayerGameInstance::GetOptionsMenu()
+{
+    return this->bIsOptionsMenu;
+}
+
 
 void UUdemyMultiplayerGameInstance::StopMovie()
 {    
@@ -222,13 +222,6 @@ TSubclassOf<AUdemyMultiplayerCharacter> UUdemyMultiplayerGameInstance::GetHeroeB
 void UUdemyMultiplayerGameInstance::OpenLevelWithDelay(FName InLevelName, FString InListen)
 {
     UGameplayStatics::OpenLevel(GWorld, InLevelName, true, InListen);
-}
-
-void UUdemyMultiplayerGameInstance::InitializeMapConfigurations()
-{
-    this->ConfigurationMaps.Add("LobbyMap", FConfigurationMaps{ TEXT("Game/ThirdPerson/Maps/ThirdPersonMap?listen"), TEXT("/Game/UI/Menu/Textures/LobbyMap"),TEXT("ThirdPersonMap"), 1 });
-    this->ConfigurationMaps.Add("CementeryMap", FConfigurationMaps{ TEXT("/Game/ThirdPerson/Maps/Cementery?listen"), TEXT("/Game/UI/Menu/Textures/CementeryMap"),TEXT("Cementery"), 2 });
-    this->ConfigurationMaps.Add("EgyptMap", FConfigurationMaps{ TEXT("/Game/ThirdPerson/Maps/Egypt?listen"), TEXT("/Game/UI/Menu/Textures/EgyptMap"),TEXT("Egypt"), 3 });
 }
 
 void UUdemyMultiplayerGameInstance::InitializePlayerSpot()

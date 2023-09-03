@@ -69,12 +69,15 @@ public:
 	int32 CurrentPlayers;
 	UPROPERTY(Replicated)
 	int32 MaxPlayers;
-	TSubclassOf<AUdemyMultiplayerCharacter> DefaultCharacterChampion;
+	TSubclassOf<AUdemyMultiplayerCharacter> HeroeDefault;
 	UPROPERTY(EditAnyWhere)
 	TSubclassOf<ALobbyPlayerSpot> LobbyPlayerSpotClass;
 
 private:
 	void DestroyCharacterSelectedIfExits(ALobbyPlayerController* LobbyPlayerController);
 	void SpawnCharacterOnPlayerSpot(ALobbyPlayerController* LobbyPlayerController);
+	void UpdatePlayerName(ALobbyPlayerController* LobbyPlayerController);
+	void UpdateReadyState(ALobbyPlayerController* LobbyPlayerController);
+	void FillConnectedPlayers();
 	class UUdemyMultiplayerGameInstance* UdemyMultiplayerGameInstance;
 };

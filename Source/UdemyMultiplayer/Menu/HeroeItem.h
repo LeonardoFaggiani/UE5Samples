@@ -45,4 +45,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void SetHeroeIcon(FString InHeroeIcon);
+	
+	UFUNCTION(BlueprintCallable)
+		void RemoveDisabledStateToAllItems();
 };

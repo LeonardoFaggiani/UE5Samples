@@ -56,6 +56,7 @@ AUdemyMultiplayerCharacter::AUdemyMultiplayerCharacter()
 
 	OverheadPlayerSpot = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadPlayerSpot"));
 	OverheadPlayerSpot->SetupAttachment(RootComponent);
+	bReplicates = true;
 }
 
 void AUdemyMultiplayerCharacter::BeginPlay()
@@ -92,7 +93,6 @@ void AUdemyMultiplayerCharacter::SetupPlayerInputComponent(class UInputComponent
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AUdemyMultiplayerCharacter::Look);
 
 	}
-
 }
 
 void AUdemyMultiplayerCharacter::Move(const FInputActionValue& Value)
@@ -150,6 +150,15 @@ void AUdemyMultiplayerCharacter::Multi_SetPlayerName_Implementation(const FStrin
 
 	if (IsValid(InOverheadPlayerSpot))
 		InOverheadPlayerSpot->SetPlayerName(InPlayerName);
+	else {
+
+		FTimerHandle MemberTimerHandle;
+		FTimerDelegate TimerDel;
+
+		TimerDel.BindUFunction(this, FName("Multi_SetPlayerName"), InPlayerName);
+
+		GetWorld()->GetTimerManager().SetTimer(MemberTimerHandle, TimerDel, 0.03f, false);
+	}
 }
 
 void AUdemyMultiplayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -157,4 +166,5 @@ void AUdemyMultiplayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AUdemyMultiplayerCharacter, bReady);
+	DOREPLIFETIME(AUdemyMultiplayerCharacter, PlayerName);
 }

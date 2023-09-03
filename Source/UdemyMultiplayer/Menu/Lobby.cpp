@@ -87,6 +87,8 @@ void ULobby::OnHeroesButtonClicked()
 
     InHeroeSelection->Setup();
 
+    this->ReadyButton->SetIsEnabled(false);
+
     this->SetHiddenHeroesButton(true);
 }
 
@@ -105,7 +107,9 @@ void ULobby::UpdateStatus()
 
         LobbyPlayerController->UpdateReadyState();
 
-        LobbyPlayerController->Server_NotifyPlayerStatus(LobbyPlayerController->PlayerSettings);        
+        LobbyPlayerController->Server_NotifyPlayerStatus(LobbyPlayerController->PlayerSettings);     
+        
+        this->HeroesButton->SetIsEnabled(!LobbyPlayerController->PlayerSettings.bPlayerReadyState);        
     }
 }
 
@@ -120,24 +124,16 @@ void ULobby::SetEnablePlayButton(bool bEnabled) {
 
 void ULobby::OnPreviousMapButtonClicked()
 {
-    FConfigurationMaps* FConfigurationMaps = this->GetPreviousNextMap(false);
-
-    UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), NULL, *FConfigurationMaps->ImagePath));
-
-    this->SetMap(Texture, *FConfigurationMaps->Name);
-
-    this->NotifyMapChaged();
+    FConfigurationMaps* ConfigurationMaps = this->GetPreviousNextMap(false);
+    
+    this->SetMapSelector(ConfigurationMaps);
 }
 
 void ULobby::OnNextMapButtonClicked()
 {
-    FConfigurationMaps* FConfigurationMaps = this->GetPreviousNextMap(true);
+    FConfigurationMaps* ConfigurationMaps = this->GetPreviousNextMap(true);
 
-    UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), NULL, *FConfigurationMaps->ImagePath));
-
-    this->SetMap(Texture, *FConfigurationMaps->Name);
-    
-    this->NotifyMapChaged();
+    this->SetMapSelector(ConfigurationMaps);
 }
 
 #pragma endregion Buttons
@@ -146,17 +142,14 @@ void ULobby::OnNextMapButtonClicked()
 
 void ULobby::InitializeMap()
 {
-    FConfigurationMaps* FConfigurationMaps = this->GetCurrentMapByName(TEXT("LobbyMap"));
-
-    if (FConfigurationMaps != nullptr)
-    {
-        UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), NULL, *FConfigurationMaps->ImagePath));
-
-        this->SetMap(Texture, *FConfigurationMaps->Name);
-
-        if(GetWorld()->IsServer())
-            this->NotifyMapChaged();
-    }
+    FConfigurationMaps FConfigurationMaps = GetFirstOrLastMap(false);
+    
+    UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), NULL, *FConfigurationMaps.ImagePath));
+    
+    this->SetMap(Texture, FConfigurationMaps.Name);
+    
+    if (GetWorld()->IsServer())
+        this->NotifyMapChaged();    
 }
 
 FConfigurationMaps* ULobby::GetCurrentMapByName(FString Name)
@@ -171,8 +164,24 @@ FConfigurationMaps* ULobby::GetCurrentMapByName(FString Name)
     return nullptr;
 }
 
+FConfigurationMaps ULobby::GetFirstOrLastMap(bool bIsFirst)
+{
+    TArray<FConfigurationMaps> ConfigurationDataArray;
+    
+    UdemyMultiplayerGameInstance->ConfigurationMaps.GenerateValueArray(ConfigurationDataArray);
+
+    ConfigurationDataArray.Sort([bIsFirst](const FConfigurationMaps A, const FConfigurationMaps B) {
+        return bIsFirst ? A.Order < B.Order : A.Order > B.Order;
+    });
+
+    return ConfigurationDataArray[0];
+}
+
 FConfigurationMaps* ULobby::GetPreviousNextMap(bool IsIncrement)
 {
+    PreviousMap->SetIsEnabled(true);
+    NextMap->SetIsEnabled(true);
+
     FName CurrentMapName = MapImage->Brush.GetResourceName();
 
     FConfigurationMaps* CurrentMap = this->GetCurrentMapByName(CurrentMapName.ToString());
@@ -192,12 +201,42 @@ FConfigurationMaps* ULobby::GetPreviousNextMap(bool IsIncrement)
         }
     }
 
-    if (PreviousOrNextMap == nullptr)
+    int VerifyIfExistsPreviousOrNextMap = IsIncrement ? (PreviousNextOrder + 1) : (PreviousNextOrder - 1);
+
+    FConfigurationMaps* ExistsPreviousOrNextMap = nullptr;
+
+    for (TPair<FString, FConfigurationMaps> Map : UdemyMultiplayerGameInstance->ConfigurationMaps)
     {
-        PreviousOrNextMap = IsIncrement ? this->GetCurrentMapByName(TEXT("LobbyMap")) : this->GetCurrentMapByName(TEXT("EgyptMap"));
+        if (Map.Value.Order == VerifyIfExistsPreviousOrNextMap)
+        {
+            ExistsPreviousOrNextMap = this->GetCurrentMapByName(Map.Key);
+        }
+    }
+
+    if (ExistsPreviousOrNextMap == nullptr) {
+        if (IsIncrement) {
+            PreviousMap->SetIsEnabled(true);
+            NextMap->SetIsEnabled(false);
+        }
+        else {
+            PreviousMap->SetIsEnabled(false);
+            NextMap->SetIsEnabled(true);
+        }
     }
 
     return PreviousOrNextMap;
+}
+
+void ULobby::SetMapSelector(FConfigurationMaps* ConfigurationMaps)
+{
+    if (ConfigurationMaps != nullptr)
+    {
+        UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), NULL, *ConfigurationMaps->ImagePath));
+
+        this->SetMap(Texture, *ConfigurationMaps->Name);
+
+        this->NotifyMapChaged();
+    }
 }
 
 void ULobby::NotifyMapChaged() {

@@ -7,3 +7,13 @@
 AUdemyMultiplayerPlayerState::AUdemyMultiplayerPlayerState() {
 
 }
+
+void AUdemyMultiplayerPlayerState::AddHeroeItem(UHeroeItem* HeroeItem)
+{
+    this->HeroesItems.Add(HeroeItem);
+}
+
+TArray<UHeroeItem*> AUdemyMultiplayerPlayerState::GetHeroesItems()
+{
+    return this->HeroesItems;
+}

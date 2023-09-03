@@ -13,13 +13,13 @@ struct UDEMYMULTIPLAYER_API FConfigurationMaps
 public:
 	GENERATED_BODY()
 
-		UPROPERTY(BlueprintReadOnly)
+		UPROPERTY(EditAnyWhere)
 		FString Path;
-		UPROPERTY(BlueprintReadOnly)
+		UPROPERTY(EditAnyWhere)
 		FString ImagePath;
-		UPROPERTY(BlueprintReadOnly)
+		UPROPERTY(EditAnyWhere)
 		FString Name;
-		UPROPERTY(BlueprintReadOnly)
+		UPROPERTY(EditAnyWhere)
 		int32 Order;
 
 	FConfigurationMaps();

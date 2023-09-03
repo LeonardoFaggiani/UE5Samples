@@ -4,7 +4,8 @@
 #include "HeroeItem.h"
 #include "../LobbyPlayerController.h"
 #include "Components/HorizontalBoxSlot.h"
-
+#include <Kismet/GameplayStatics.h>
+#include <UdemyMultiplayer/UdemyMultiplayerPlayerState.h>
 
 UHeroeItem::UHeroeItem()
 {
@@ -18,13 +19,18 @@ void UHeroeItem::SetHeroeSelected()
 
     if (IsValid(LobbyPlayerController)) {
 
+        RemoveDisabledStateToAllItems();
+
         UWorld* World = GetWorld();
 
         if (IsValid(World))
         {
             UGameInstance* GameInstance = World->GetGameInstance();
 
-            if (IsValid(GameInstance)) {
+            if (IsValid(GameInstance))
+            {
+                this->SetIsEnabled(false);
+
                 UUdemyMultiplayerGameInstance* UdemyMultiplayerGameInstance = Cast<UUdemyMultiplayerGameInstance>(GameInstance);
 
                 TSubclassOf<AUdemyMultiplayerCharacter> UdemyMultiplayerCharacter = UdemyMultiplayerGameInstance->GetHeroeByName(this->HeroeName->GetText().ToString());
@@ -49,7 +55,7 @@ void UHeroeItem::SetAttributeStats(const FHeroeResources& InHeroeResources)
 
         FSlateChildSize SlateChildSize;
 
-        HorizontalBoxSlot->SetSize(SlateChildSize);
+        HorizontalBoxSlot->SetSize(SlateChildSize);        
     }
 }
 
@@ -64,4 +70,14 @@ void UHeroeItem::SetHeroeIcon(FString InHeroeIcon)
 
     if (IsValid(IconTexture))
         this->HeroeIcon->SetBrushFromTexture(IconTexture);
+}
+
+void UHeroeItem::RemoveDisabledStateToAllItems()
+{
+    ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(this->GetOwningPlayer());
+
+    AUdemyMultiplayerPlayerState* UdemyMultiplayerPlayerState = LobbyPlayerController->GetPlayerState<AUdemyMultiplayerPlayerState>();
+
+    for (UHeroeItem* HeroeItem : UdemyMultiplayerPlayerState->GetHeroesItems())
+        HeroeItem->SetIsEnabled(true);
 }

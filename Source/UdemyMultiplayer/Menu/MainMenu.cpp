@@ -10,8 +10,9 @@ bool UMainMenu::Initialize()
 
     if (ExitButton && HostButton && FindGamesButton) {
         HostButton->OnClicked().AddUObject(this, &ThisClass::OnHostButtonClicked);
-        FindGamesButton->OnClicked().AddUObject(this, &ThisClass::OnFindGamesButtonClick);
-        ExitButton->OnClicked().AddUObject(this, &ThisClass::OnExitButtonClick);
+        FindGamesButton->OnClicked().AddUObject(this, &ThisClass::OnFindGamesButtonClicked);
+        OptionsButton->OnClicked().AddUObject(this, &ThisClass::OnOptionsButtonButtonClicked);
+        ExitButton->OnClicked().AddUObject(this, &ThisClass::OnExitButtonClicked);
     }
 
     UWorld* World = GetWorld();
@@ -39,19 +40,29 @@ void UMainMenu::OnHostButtonClicked()
 {
     this->UdemyMultiplayerGameInstance->SetHostGame(true);
     this->UdemyMultiplayerGameInstance->SetFindGames(false);
+    this->UdemyMultiplayerGameInstance->SetOptionsMenu(false);
 
     this->UdemyMultiplayerGameInstance->OpenNextLevel(FName("MainMenuWidgets"), false, false, 0.1f);
-
 }
 
-void UMainMenu::OnFindGamesButtonClick()
+void UMainMenu::OnFindGamesButtonClicked()
 {
-    this->UdemyMultiplayerGameInstance->SetHostGame(false);
     this->UdemyMultiplayerGameInstance->SetFindGames(true);
+    this->UdemyMultiplayerGameInstance->SetHostGame(false);
+    this->UdemyMultiplayerGameInstance->SetOptionsMenu(false);
 
     this->UdemyMultiplayerGameInstance->OpenNextLevel(FName("MainMenuWidgets"), false, false, 0.1f);
 }
 
-void UMainMenu::OnExitButtonClick() {
+void UMainMenu::OnOptionsButtonButtonClicked()
+{
+    this->UdemyMultiplayerGameInstance->SetOptionsMenu(true);
+    this->UdemyMultiplayerGameInstance->SetHostGame(false);
+    this->UdemyMultiplayerGameInstance->SetFindGames(false);
+
+    this->UdemyMultiplayerGameInstance->OpenNextLevel(FName("MainMenuWidgets"), false, false, 0.1f);
+}
+
+void UMainMenu::OnExitButtonClicked() {
     if (MenuInterface != nullptr) MenuInterface->Quit();
 }

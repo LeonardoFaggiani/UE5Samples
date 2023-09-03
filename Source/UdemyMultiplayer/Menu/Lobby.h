@@ -15,9 +15,7 @@
 #include "../Menu/Struct/ConfigurationMaps.h"
 #include "../UdemyMultiplayerGameInstance.h"
 #include "HeroeSelection.h"
-#include "PlayerLobbyList.h"
 #include "Lobby.generated.h"
-
 
 /**
  * 
@@ -31,6 +29,15 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 		class UOverlay* CharacterSelectionContainer;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
+		TObjectPtr<UCommonButtonBase> ReadyButton;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
+		TObjectPtr<UCommonButtonBase> ReadyUpButton;
+
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
+		TObjectPtr<UCommonButtonBase> HeroesButton;
 
 	void SetCurrentPlayersFormat(FString currentPlayersFormat);
 	void SetServerName(FString serverName);
@@ -53,15 +60,6 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 		class UTextBlock* ServerName;
 
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
-		TObjectPtr<UCommonButtonBase> ReadyButton;
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
-		TObjectPtr<UCommonButtonBase> ReadyUpButton;
-
-	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
-		TObjectPtr<UCommonButtonBase> HeroesButton;
-
 	UPROPERTY(Replicated, meta = (BindWidget))
 		class UImage* MapImage;
 
@@ -83,7 +81,10 @@ protected:
 private:
 	void InitializeMap();	
 	FConfigurationMaps* GetCurrentMapByName(FString Name);
+	FConfigurationMaps GetFirstOrLastMap(bool bIsFirst);
 	FConfigurationMaps* GetPreviousNextMap(bool IsIncrement);
+	void SetMapSelector(FConfigurationMaps* ConfigurationMaps);
+
 	void NotifyMapChaged();
 	UUdemyMultiplayerGameInstance* UdemyMultiplayerGameInstance;
 	class ALobbyGameMode* LobbyGameMode;

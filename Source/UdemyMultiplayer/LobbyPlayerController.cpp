@@ -117,6 +117,8 @@ void ALobbyPlayerController::Client_SwitchToLobbyMode_Implementation()
 	if (!IsValid(this->Lobby)) return;
 
 	this->Lobby->SetHiddenHeroesButton(false);
+
+	this->Lobby->ReadyButton->SetIsEnabled(true);
 }
 
 #pragma endregion Client

@@ -42,6 +42,7 @@ class AUdemyMultiplayerCharacter : public ACharacter
 
 public:
 	AUdemyMultiplayerCharacter();
+
 	void SetIsReady(bool InbReady);
 
 	UFUNCTION()
@@ -49,6 +50,9 @@ public:
 
 	UPROPERTY(ReplicatedUsing = OnRep_ReadyStateUpdated)
 		bool bReady;
+
+	UPROPERTY(Replicated)
+		FString PlayerName;
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_SetPlayerName(const FString& InPlayerName);

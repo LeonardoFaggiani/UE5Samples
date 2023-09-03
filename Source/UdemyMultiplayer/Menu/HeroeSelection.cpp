@@ -5,6 +5,7 @@
 #include "../LobbyPlayerController.h"
 #include "Components/HorizontalBoxSlot.h"
 #include "HeroeItem.h"
+#include <UdemyMultiplayer/UdemyMultiplayerPlayerState.h>
 
 bool UHeroeSelection::Initialize() {
     
@@ -44,6 +45,8 @@ void UHeroeSelection::FillContainer()
     //Fill the container of heroes with the card of each heroes and thier stats
     this->Container->ClearChildren();
 
+    ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(this->GetOwningPlayer());
+
     if (IsValid(this->UdemyMultiplayerGameInstance))
     {
         for (FHeroeResources HeroeResources : this->UdemyMultiplayerGameInstance->HeroeResources)
@@ -58,6 +61,9 @@ void UHeroeSelection::FillContainer()
             UHorizontalBoxSlot* HorizontalBoxSlot = this->Container->AddChildToHorizontalBox(InHeroeItem);
 
             HorizontalBoxSlot->SetVerticalAlignment(EVerticalAlignment::VAlign_Bottom);
+
+            AUdemyMultiplayerPlayerState* UdemyMultiplayerPlayerState = LobbyPlayerController->GetPlayerState<AUdemyMultiplayerPlayerState>();
+            UdemyMultiplayerPlayerState->AddHeroeItem(InHeroeItem);
         }
     }
 }

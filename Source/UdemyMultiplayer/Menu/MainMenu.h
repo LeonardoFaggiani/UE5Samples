@@ -30,9 +30,14 @@ protected:
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
 		TObjectPtr<UCommonButtonBase> ExitButton;
 
+	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
+		TObjectPtr<UCommonButtonBase> OptionsButton;
+
 	UFUNCTION() void OnHostButtonClicked();
-	UFUNCTION() void OnFindGamesButtonClick();
-	UFUNCTION() void OnExitButtonClick();
+	UFUNCTION() void OnFindGamesButtonClicked();
+	UFUNCTION() void OnOptionsButtonButtonClicked();
+	UFUNCTION() void OnExitButtonClicked();
+
 
 private:
 	class UUdemyMultiplayerGameInstance* UdemyMultiplayerGameInstance;
