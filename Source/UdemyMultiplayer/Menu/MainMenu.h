@@ -28,10 +28,11 @@ protected:
 		TObjectPtr<UCommonButtonBase> FindGamesButton;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
-		TObjectPtr<UCommonButtonBase> ExitButton;
+		TObjectPtr<UCommonButtonBase> OptionsButton;
 
 	UPROPERTY(BlueprintReadOnly, meta = (BindWidget, BlueprintProtected = true, AllowPrivateAccess = true))
-		TObjectPtr<UCommonButtonBase> OptionsButton;
+		TObjectPtr<UCommonButtonBase> ExitButton;
+
 
 	UFUNCTION() void OnHostButtonClicked();
 	UFUNCTION() void OnFindGamesButtonClicked();

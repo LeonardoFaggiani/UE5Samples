@@ -7,10 +7,12 @@
 #include "Net/UnrealNetwork.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/GameStateBase.h"
+#include "../Menu/Struct/InGamePlayerInfo.h"
 #include "../LobbyPlayerController.h"
 #include "../UdemyMultiplayerGameInstance.h"
 #include "../UdemyMultiplayerCharacter.h"
 #include "../Menu/LobbyPlayerSpot.h"
+#include "UdemyMultiplayer/Menu/OverheadPlayerSpot.h"
 #include "../UdemyMultiplayerPlayerState.h"
 
 
@@ -26,7 +28,6 @@ ALobbyGameMode::ALobbyGameMode(const FObjectInitializer& ObjectInitializer) : Su
 
 		if (IsValid(GameInstance)) {
 			UdemyMultiplayerGameInstance = Cast<UUdemyMultiplayerGameInstance>(GameInstance);
-			HeroeDefault = UdemyMultiplayerGameInstance->GetHeroeByName("Warrior");
 		}
     }
 }
@@ -39,6 +40,9 @@ void ALobbyGameMode::PostLogin(APlayerController* NewPlayer) {
     {
         //if the joining player is a lobby player controller, add him to a list of connected Players
         if (NewPlayer) {
+
+			this->HeroeDefault = UdemyMultiplayerGameInstance->GetHeroeByName("Warrior");
+
             ALobbyPlayerController* LobbyPlayerController = Cast<ALobbyPlayerController>(NewPlayer);
 
             this->AllPlayerControllers.Add(LobbyPlayerController);
@@ -162,9 +166,15 @@ void ALobbyGameMode::Server_EveryoneUpdate_Implementation()
 {
 	this->FillConnectedPlayers();
 
+
 	for (ALobbyPlayerController* LobbyPlayerController : this->AllPlayerControllers)
-	{		
-		this->UpdateReadyState(LobbyPlayerController);
+	{	
+		FTimerHandle MemberTimerHandle;
+		FTimerDelegate TimerDel;
+
+		TimerDel.BindUFunction(this, FName("UpdateReadyStatus"), LobbyPlayerController);
+
+		GetWorld()->GetTimerManager().SetTimer(MemberTimerHandle, TimerDel, 0.1f, false);
 
 		LobbyPlayerController->Client_UpdateNumberOfPlayers(this->CurrentPlayers, this->MaxPlayers);
 	}
@@ -179,7 +189,8 @@ void ALobbyGameMode::LaunchTheGame()
 	FString MapToTravel = FString::Format(*FullMapPath, { MapName });
 
 	if (World) {
-		//bUseSeamlessTravel = true;		
+		//bUseSeamlessTravel = true;	
+		this->SetPlayerInfoToTransfer();
 		World->ServerTravel(FString(MapToTravel));
 	}		
 }
@@ -195,7 +206,7 @@ void ALobbyGameMode::SpawnCharacterOnPlayerSpot(ALobbyPlayerController* LobbyPla
 
 	params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-	AUdemyMultiplayerCharacter* SpawnCharacter = Cast<AUdemyMultiplayerCharacter>(GetWorld()->SpawnActor<AUdemyMultiplayerCharacter>(HeroeDefault, LobbyPlayerSpot->GetActorTransform(), params));
+	AUdemyMultiplayerCharacter* SpawnCharacter = Cast<AUdemyMultiplayerCharacter>(GetWorld()->SpawnActor<AUdemyMultiplayerCharacter>(this->HeroeDefault, LobbyPlayerSpot->GetActorTransform(), params));
 
 	FTransform ActorTransform = LobbyPlayerSpot->GetActorTransform();
 	
@@ -208,6 +219,8 @@ void ALobbyGameMode::SpawnCharacterOnPlayerSpot(ALobbyPlayerController* LobbyPla
 	SpawnCharacter->SetActorTransform(ActorTransform);
 
 	LobbyPlayerController->SetCurrentCharacter(SpawnCharacter);
+	LobbyPlayerController->PlayerSettings.HeroeSelected = this->HeroeDefault;
+	LobbyPlayerController->PlayerSettings.PlayerIndex = this->AllPlayerControllers.IndexOfByKey(LobbyPlayerController);
 
 	this->UpdatePlayerName(LobbyPlayerController);
 }
@@ -230,19 +243,18 @@ void ALobbyGameMode::UpdatePlayerName(ALobbyPlayerController* LobbyPlayerControl
 
     if (IsValid(UdemyMultiplayerCharacter) && IsValid(UdemyMultiplayerPlayerState)) {
 
-		LobbyPlayerController->PlayerSettings.PlayerName = UdemyMultiplayerPlayerState->GetPlayerName();		
+        LobbyPlayerController->PlayerSettings.PlayerName = UdemyMultiplayerPlayerState->GetPlayerName();
 
-		UdemyMultiplayerCharacter->Multi_SetPlayerName(LobbyPlayerController->PlayerSettings.PlayerName);
-	}
+        UdemyMultiplayerCharacter->Multi_SetPlayerName(LobbyPlayerController->PlayerSettings.PlayerName);
+    }
 }
 
-void ALobbyGameMode::UpdateReadyState(ALobbyPlayerController* LobbyPlayerController)
+void ALobbyGameMode::UpdateReadyStatus(ALobbyPlayerController* LobbyPlayerController)
 {
 	AUdemyMultiplayerCharacter* UdemyMultiplayerCharacter = LobbyPlayerController->GetCurrentCharacter();
 
 	if (IsValid(UdemyMultiplayerCharacter)) {
-		UdemyMultiplayerCharacter->SetIsReady(LobbyPlayerController->PlayerSettings.bPlayerReadyState);
-		UdemyMultiplayerCharacter->OnRep_ReadyStateUpdated();
+		UdemyMultiplayerCharacter->Multi_SetReadyStatus(LobbyPlayerController->PlayerSettings.bPlayerReadyState);		
 	}
 }
 
@@ -256,6 +268,20 @@ void ALobbyGameMode::FillConnectedPlayers()
 	for (ALobbyPlayerController* LobbyPlayerController : this->AllPlayerControllers)
 	{
 		this->ConnectedPlayers.Add(LobbyPlayerController->PlayerSettings);
+	}
+}
+
+void ALobbyGameMode::SetPlayerInfoToTransfer()
+{
+	for (ALobbyPlayerController* LobbyPlayerController : this->AllPlayerControllers)
+	{
+		FInGamePlayerInfo InGamePlayerInfo;
+
+		InGamePlayerInfo.HeroeSelected = LobbyPlayerController->PlayerSettings.HeroeSelected;
+		InGamePlayerInfo.PlayerName = LobbyPlayerController->PlayerSettings.PlayerName;
+		InGamePlayerInfo.PlayerIndex = LobbyPlayerController->PlayerSettings.PlayerIndex;
+
+		this->UdemyMultiplayerGameInstance->InGamePlayersInfo.Add(InGamePlayerInfo);
 	}
 }
 

@@ -37,26 +37,29 @@ class AUdemyMultiplayerCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* LookAction;
 
-	UPROPERTY(EditAnyWhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-		UWidgetComponent* OverheadPlayerSpot;
-
 public:
 	AUdemyMultiplayerCharacter();
 
-	void SetIsReady(bool InbReady);
-
-	UFUNCTION()
-		void OnRep_ReadyStateUpdated();
-
-	UPROPERTY(ReplicatedUsing = OnRep_ReadyStateUpdated)
-		bool bReady;
+	UPROPERTY(Replicated)
+		bool bIsReady;
 
 	UPROPERTY(Replicated)
 		FString PlayerName;
 
+	UPROPERTY(EditAnyWhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+		UWidgetComponent* OverheadPlayerSpot;
+
 	UFUNCTION(NetMulticast, Reliable)
-	void Multi_SetPlayerName(const FString& InPlayerName);
-	void Multi_SetPlayerName_Implementation(const FString& InPlayerName);
+		void Multi_SetPlayerName(const FString& InPlayerName);
+		void Multi_SetPlayerName_Implementation(const FString& InPlayerName);
+
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+		void Multi_SetReadyStatus(bool InbIsReady);
+		void Multi_SetReadyStatus_Implementation(bool InbIsReady);
+
+	UFUNCTION(BlueprintCallable, NetMulticast, Reliable)
+		void Multi_SetIconAndColorOverheadWidget(bool bIsHidden, const FString& InPlayerNameColor);
+		void Multi_SetIconAndColorOverheadWidget_Implementation(bool bIsHidden, const FString& InPlayerNameColor);
 
 protected:
 
@@ -73,7 +76,6 @@ protected:
 	
 	// To add mapping context
 	virtual void BeginPlay();
-
 
 public:
 	/** Returns CameraBoom subobject **/

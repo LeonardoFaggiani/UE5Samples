@@ -5,8 +5,10 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Animation/WidgetAnimation.h"
+#include "CommonTextBlock.h"
 #include "MenuBase.h"
 #include "LoadingScreen.generated.h"
+
 
 /**
  * 
@@ -30,4 +32,5 @@ private:
 		UWidgetAnimation* BounceInOut;
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 		UWidgetAnimation* BounceInCompleted;
+
 };

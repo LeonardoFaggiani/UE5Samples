@@ -6,7 +6,9 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/TextBlock.h"
 #include "Components/Image.h"
+#include "../UdemyMultiplayerCharacter.h"
 #include "OverheadPlayerSpot.generated.h"
+
 
 /**
  * 
@@ -18,16 +20,24 @@ class UDEMYMULTIPLAYER_API UOverheadPlayerSpot : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	void SetPlayerName(FString PlayerName);
-	void SetReadyStatus(bool bIsReady);
+
+	void UpdateReadyStatus();
+	void UpdatePlayerName();
+	void SetCharacter(AUdemyMultiplayerCharacter* InUdemyMultiplayerCharacter);
+
 	void SetReadyStatusVisibility(bool bIsHidden);
 	void SetPlayerNameColor(FString Color);
 
-	UPROPERTY(meta = (BindWidget))
+	UFUNCTION(BlueprintCallable)
+		UImage* GetStatusIcon();
+
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 		UTextBlock* LobbyPlayerName;
 
-	UPROPERTY(meta = (BindWidget))
+	UPROPERTY(BlueprintReadWrite, meta = (BindWidget))
 		UImage* ReadyStatusIcon;
+
+	AUdemyMultiplayerCharacter* UdemyMultiplayerCharacter;
 
 protected:
 	virtual void NativeDestruct() override;		

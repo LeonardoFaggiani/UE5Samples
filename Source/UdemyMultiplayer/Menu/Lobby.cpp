@@ -105,8 +105,6 @@ void ULobby::UpdateStatus()
     {
         LobbyPlayerController->PlayerSettings.bPlayerReadyState = !LobbyPlayerController->PlayerSettings.bPlayerReadyState;
 
-        LobbyPlayerController->UpdateReadyState();
-
         LobbyPlayerController->Server_NotifyPlayerStatus(LobbyPlayerController->PlayerSettings);     
         
         this->HeroesButton->SetIsEnabled(!LobbyPlayerController->PlayerSettings.bPlayerReadyState);        
@@ -116,7 +114,6 @@ void ULobby::UpdateStatus()
 void ULobby::SetHiddenHeroesButton(bool bHidden) {
     this->HeroesButton->SetVisibility(bHidden ? ESlateVisibility::Hidden : ESlateVisibility::Visible);
 }
-
 
 void ULobby::SetEnablePlayButton(bool bEnabled) {
     this->ReadyUpButton->SetIsEnabled(bEnabled);
@@ -142,12 +139,13 @@ void ULobby::OnNextMapButtonClicked()
 
 void ULobby::InitializeMap()
 {
-    FConfigurationMaps FConfigurationMaps = GetFirstOrLastMap(false);
+    FConfigurationMaps FConfigurationMaps = GetFirstOrLastMap(true);
     
     UTexture2D* Texture = Cast<UTexture2D>(StaticLoadObject(UTexture2D::StaticClass(), NULL, *FConfigurationMaps.ImagePath));
     
     this->SetMap(Texture, FConfigurationMaps.Name);
-    
+    this->PreviousMap->SetIsEnabled(false);
+
     if (GetWorld()->IsServer())
         this->NotifyMapChaged();    
 }
@@ -179,10 +177,10 @@ FConfigurationMaps ULobby::GetFirstOrLastMap(bool bIsFirst)
 
 FConfigurationMaps* ULobby::GetPreviousNextMap(bool IsIncrement)
 {
-    PreviousMap->SetIsEnabled(true);
-    NextMap->SetIsEnabled(true);
+    this->PreviousMap->SetIsEnabled(true);
+    this->NextMap->SetIsEnabled(true);
 
-    FName CurrentMapName = MapImage->Brush.GetResourceName();
+    FName CurrentMapName = this->MapImage->Brush.GetResourceName();
 
     FConfigurationMaps* CurrentMap = this->GetCurrentMapByName(CurrentMapName.ToString());
 
@@ -193,7 +191,7 @@ FConfigurationMaps* ULobby::GetPreviousNextMap(bool IsIncrement)
 
     int PreviousNextOrder = IsIncrement ? (CurrentMap->Order + 1) : (CurrentMap->Order - 1);
 
-    for (TPair<FString, FConfigurationMaps> Map : UdemyMultiplayerGameInstance->ConfigurationMaps)
+    for (TPair<FString, FConfigurationMaps> Map : this->UdemyMultiplayerGameInstance->ConfigurationMaps)
     {
         if (Map.Value.Order == PreviousNextOrder)
         {
@@ -205,7 +203,7 @@ FConfigurationMaps* ULobby::GetPreviousNextMap(bool IsIncrement)
 
     FConfigurationMaps* ExistsPreviousOrNextMap = nullptr;
 
-    for (TPair<FString, FConfigurationMaps> Map : UdemyMultiplayerGameInstance->ConfigurationMaps)
+    for (TPair<FString, FConfigurationMaps> Map : this->UdemyMultiplayerGameInstance->ConfigurationMaps)
     {
         if (Map.Value.Order == VerifyIfExistsPreviousOrNextMap)
         {
@@ -215,12 +213,12 @@ FConfigurationMaps* ULobby::GetPreviousNextMap(bool IsIncrement)
 
     if (ExistsPreviousOrNextMap == nullptr) {
         if (IsIncrement) {
-            PreviousMap->SetIsEnabled(true);
-            NextMap->SetIsEnabled(false);
+            this->PreviousMap->SetIsEnabled(true);
+            this->NextMap->SetIsEnabled(false);
         }
         else {
-            PreviousMap->SetIsEnabled(false);
-            NextMap->SetIsEnabled(true);
+            this->PreviousMap->SetIsEnabled(false);
+            this->NextMap->SetIsEnabled(true);
         }
     }
 

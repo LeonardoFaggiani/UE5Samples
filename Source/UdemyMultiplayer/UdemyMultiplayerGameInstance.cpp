@@ -11,13 +11,12 @@
 #include "Runtime/UMG/Public/UMG.h"
 #include "UdemyMultiplayerCharacter.h"
 #include "Slate.h"
-#include "MoviePlayer.h"
 #include "Menu/Enum/AttributeType.h"
 #include "Menu/Struct/HeroeAttribute.h"
 
+
 UUdemyMultiplayerGameInstance::UUdemyMultiplayerGameInstance(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-
     this->InitializeHeroes();
     this->InitializePlayerSpot();
 }
@@ -26,12 +25,20 @@ void UUdemyMultiplayerGameInstance::Init()
 {
     Super::Init();
 
-/*    FCoreUObjectDelegates::PreLoadMap.AddUObject(this, &UUdemyMultiplayerGameInstance::BeginLoadingScreen);
-    FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UUdemyMultiplayerGameInstance::EndLoadingScreen);   */ 
+    FWorldDelegates::LevelRemovedFromWorld.AddUObject(this, &ThisClass::OnLevelRemovedFromWorld);
+    FCoreUObjectDelegates::PreLoadMap.AddUObject(this, &UUdemyMultiplayerGameInstance::BeginLoadingScreen);
+    FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UUdemyMultiplayerGameInstance::EndLoadingScreen);
 
-    if (!ensure(LoadingScreenClass != nullptr)) return;
+    if (!ensure(this->LoadingScreenClass != nullptr)) return;
 
     this->LoadingScreen = CreateWidget<ULoadingScreen>(this, LoadingScreenClass);
+
+    this->LoadingScreenAttributes.MinimumLoadingScreenDisplayTime = 5;
+    this->LoadingScreenAttributes.bAutoCompleteWhenLoadingCompletes = true;
+    this->LoadingScreenAttributes.bMoviesAreSkippable = false;
+    this->LoadingScreenAttributes.bWaitForManualStop = true;
+    this->LoadingScreenAttributes.bAllowEngineTick = true;        
+    this->LoadingScreenAttributes.WidgetLoadingScreen = this->LoadingScreen->TakeWidget();
 }
 
 UMainMenu* UUdemyMultiplayerGameInstance::LoadMenu()
@@ -47,26 +54,42 @@ UMainMenu* UUdemyMultiplayerGameInstance::LoadMenu()
     return Menu;
 }
 
+void UUdemyMultiplayerGameInstance::OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld) {
+
+        if (InLevel == nullptr) {
+            if (InWorld->GetFName() == FName("MainMenuWidgets"))
+            {
+                if (this->LoadingScreen->IsInViewport()) {
+
+                    this->LoadingScreen->TransBounceInCompleted();
+
+                    this->LoadingScreen->SetMenuInterface(this);
+                }
+            }
+        }
+    
+}
+void UUdemyMultiplayerGameInstance::EndLoadingScreen_Implementation(UWorld* InLoadedWorld)
+{
+    if (InLoadedWorld->GetName() == "LobbyChampionSelection")
+    {
+        if (!this->LoadingScreen->IsInViewport()) {
+            this->ShowLoadingScreen(false);
+            this->LoadingScreen->SetMenuInterface(this);
+        }
+    }
+}
+
 void UUdemyMultiplayerGameInstance::BeginLoadingScreen_Implementation(const FString& InMapName)
 {
     if (InMapName == "/Game/ThirdPerson/Maps/LobbyChampionSelection")
     {
-        //FLoadingScreenAttributes LoadingScreenAttributes;
-        //LoadingScreenAttributes.MinimumLoadingScreenDisplayTime = 3;
-        //LoadingScreenAttributes.bAutoCompleteWhenLoadingCompletes = false;
-        //LoadingScreenAttributes.bMoviesAreSkippable = false;
-        //LoadingScreenAttributes.bWaitForManualStop = true;
-        //LoadingScreenAttributes.bAllowEngineTick = true;        
-        //LoadingScreenAttributes.WidgetLoadingScreen = this->LoadingScreen->TakeWidget();         
+        if (this->LoadingScreen->IsInViewport()) {
 
-        //GetMoviePlayer()->SetupLoadingScreen(LoadingScreenAttributes);
-    }
-}
+            this->LoadingScreen->TransBounceInCompleted();
 
-void UUdemyMultiplayerGameInstance::EndLoadingScreen_Implementation(UWorld* InLoadedWorld)
-{
-    if (InLoadedWorld->GetName() == "LobbyChampionSelection") {
-        
+            this->LoadingScreen->SetMenuInterface(this);
+        }
     }
 }
 
@@ -141,10 +164,13 @@ void UUdemyMultiplayerGameInstance::SetHostSettings(int32 NumberOfPlayers, FStri
 
 void UUdemyMultiplayerGameInstance::ShowLoadingScreen(bool bWithTransition)
 {
+    UE_LOG(LogTemp, Warning, TEXT("ShowLoadingScreen OK!"));
+    
     if (!ensure(this->LoadingScreen != nullptr)) return;
 
-    if (!this->LoadingScreen->IsInViewport())
-        this->LoadingScreen->Setup();   
+    if (!this->LoadingScreen->IsInViewport()) {
+        this->LoadingScreen->Setup(1);
+    }
 
     bWithTransition ? this->LoadingScreen->TransBounceIn() : this->LoadingScreen->TransBounceInCompleted();
 
@@ -153,6 +179,8 @@ void UUdemyMultiplayerGameInstance::ShowLoadingScreen(bool bWithTransition)
 
 void UUdemyMultiplayerGameInstance::HideLoadingScreen(bool bWithTransition)
 {
+    UE_LOG(LogTemp, Warning, TEXT("HideLoadingScreen OK!"));
+
     if (!ensure(this->LoadingScreen != nullptr)) return;
 
     if (!this->LoadingScreen->IsInViewport())
@@ -182,6 +210,11 @@ void UUdemyMultiplayerGameInstance::SetOptionsMenu(bool InbIsOptionsMenu)
     this->bIsOptionsMenu = InbIsOptionsMenu;
 }
 
+void UUdemyMultiplayerGameInstance::SetFirstTimeLoading(bool InbIsFirstTimeLoading)
+{
+    this->bIsFirstTimeLoading = InbIsFirstTimeLoading;
+}
+
 bool UUdemyMultiplayerGameInstance::GetBackToMainMenu()
 {
     return this->bIsBackToMainMenu;
@@ -202,9 +235,24 @@ bool UUdemyMultiplayerGameInstance::GetOptionsMenu()
     return this->bIsOptionsMenu;
 }
 
+bool UUdemyMultiplayerGameInstance::GetIsFirstTimeLoading()
+{
+    return this->bIsFirstTimeLoading;
+}
+
+void UUdemyMultiplayerGameInstance::PlayEnviromentMusic(USoundBase* Audio, float Volume, bool bIsPersistLevel)
+{
+    if (!ensure(Audio != nullptr)) return;
+
+    this->Music = UGameplayStatics::CreateSound2D(GetWorld(), Audio, Volume, 1, 0, nullptr, bIsPersistLevel, true);
+
+    this->Music->Play();
+}
+
 
 void UUdemyMultiplayerGameInstance::StopMovie()
 {    
+
     GetMoviePlayer()->StopMovie();   
 }
 

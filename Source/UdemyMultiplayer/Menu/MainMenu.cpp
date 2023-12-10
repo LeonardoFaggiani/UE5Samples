@@ -8,7 +8,7 @@ bool UMainMenu::Initialize()
     if (!Super::Initialize())
         return false;
 
-    if (ExitButton && HostButton && FindGamesButton) {
+    if (HostButton && FindGamesButton && OptionsButton && ExitButton) {
         HostButton->OnClicked().AddUObject(this, &ThisClass::OnHostButtonClicked);
         FindGamesButton->OnClicked().AddUObject(this, &ThisClass::OnFindGamesButtonClicked);
         OptionsButton->OnClicked().AddUObject(this, &ThisClass::OnOptionsButtonButtonClicked);

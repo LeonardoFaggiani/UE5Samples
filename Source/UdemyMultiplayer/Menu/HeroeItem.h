@@ -31,11 +31,17 @@ public:
 	UPROPERTY(meta = (BindWidget))
 		UHorizontalBox* StatsContainer;	
 
-	UPROPERTY(EditAnywhere, meta = (BindWidget), Category = "Heroe Settings")
+	UPROPERTY(meta = (BindWidget))
 		TObjectPtr<UCommonTextBlock> HeroeName;
 
-	UPROPERTY(EditAnywhere, meta = (BindWidget), Category = "Heroe Settings")
+	UPROPERTY(meta = (BindWidget))
 		UImage* HeroeIcon;
+
+	UPROPERTY(EditAnywhere, Category = "Heroe Settings")
+		FString Name;
+
+	UPROPERTY(EditAnywhere, Category = "Heroe Settings")
+		FString IconPath;
 
 	UFUNCTION(BlueprintCallable)
 		void SetAttributeStats(const FHeroeResources& InHeroeResources);	

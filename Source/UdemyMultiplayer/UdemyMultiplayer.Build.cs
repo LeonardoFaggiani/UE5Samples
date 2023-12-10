@@ -11,11 +11,11 @@ public class UdemyMultiplayer : ModuleRules
         PublicDependencyModuleNames.AddRange(new string[] { "Core", 
 			"CoreUObject", 
 			"Engine", 
-			"InputCore", 
-			"HeadMountedDisplay", 
-			"EnhancedInput", 
-			"OnlineSubsystem", 
-			"SlateCore",
+			"InputCore",
+            "EnhancedInput",
+            "HeadMountedDisplay",
+            "OnlineSubsystem",
+            "SlateCore",
 			"MoviePlayer"
 		});
 

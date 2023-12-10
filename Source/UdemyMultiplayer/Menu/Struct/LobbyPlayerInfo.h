@@ -23,4 +23,7 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lobby Player Info")
         TSubclassOf<AUdemyMultiplayerCharacter> HeroeSelected;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lobby Player Info")
+        int32 PlayerIndex;
 };

@@ -77,7 +77,9 @@ private:
 	void DestroyCharacterSelectedIfExits(ALobbyPlayerController* LobbyPlayerController);
 	void SpawnCharacterOnPlayerSpot(ALobbyPlayerController* LobbyPlayerController);
 	void UpdatePlayerName(ALobbyPlayerController* LobbyPlayerController);
-	void UpdateReadyState(ALobbyPlayerController* LobbyPlayerController);
+	UFUNCTION()
+	void UpdateReadyStatus(ALobbyPlayerController* LobbyPlayerController);
 	void FillConnectedPlayers();
+	void SetPlayerInfoToTransfer();
 	class UUdemyMultiplayerGameInstance* UdemyMultiplayerGameInstance;
 };

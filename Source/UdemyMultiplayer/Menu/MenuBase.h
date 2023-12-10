@@ -3,21 +3,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Blueprint/UserWidget.h"
 #include "MenuInterface.h"
+#include "CommonUserWidget.h"
 #include "MenuBase.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UDEMYMULTIPLAYER_API UMenuBase : public UUserWidget
+class UDEMYMULTIPLAYER_API UMenuBase : public UCommonUserWidget
 {
 	GENERATED_BODY()
 
 public:
 
-	void Setup();
+	void Setup(int32 zOrder = 0);
 
 	void TearDown();
 

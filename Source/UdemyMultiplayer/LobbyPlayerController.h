@@ -7,11 +7,11 @@
 #include "Blueprint/UserWidget.h"
 #include "Components/Widget.h"
 #include "UdemyMultiplayerGameInstance.h"
-#include "InputActionValue.h"
 #include "./Menu/Struct/LobbyPlayerInfo.h"
 #include "Menu/Lobby.h"
 #include "Menu/HeroeSelection.h"
 #include "LobbyPlayerController.generated.h"
+
 
 class AUdemyMultiplayerCharacter;
 class ALobbyPlayerSpot;
@@ -30,25 +30,24 @@ public:
 	void SetCurrentCharacter(AUdemyMultiplayerCharacter* currentCharacter);
 	AUdemyMultiplayerCharacter* GetCurrentCharacter();
 	void SetPlayerSpot(ALobbyPlayerSpot* playerSpot);
-	void UpdateReadyState();
 	ALobbyPlayerSpot* GetPlayerSpot();
 
     UPROPERTY(EditAnyWhere)
         TSubclassOf<ULobby> LobbyClass;
 
-	UPROPERTY(Replicated)
-	FLobbyPlayerInfo PlayerSettings;
+	UPROPERTY(BlueprintReadWrite, Replicated)
+		FLobbyPlayerInfo PlayerSettings;
 
-	UPROPERTY(Replicated)
-	ALobbyPlayerSpot* PlayerSpot;
+	UPROPERTY(BlueprintReadWrite, Replicated)
+		ALobbyPlayerSpot* PlayerSpot;
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 		void Server_CallUpdate(const FLobbyPlayerInfo& PlayerInfo);
-	void Server_CallUpdate_Implementation(const FLobbyPlayerInfo& PlayerInfo);
+		void Server_CallUpdate_Implementation(const FLobbyPlayerInfo& PlayerInfo);
 
 	UFUNCTION(BlueprintCallable, Server, Reliable)
 		void Server_NotifyPlayerStatus(const FLobbyPlayerInfo& PlayerInfo);
-	void Server_NotifyPlayerStatus_Implementation(const FLobbyPlayerInfo& PlayerInfo);
+		void Server_NotifyPlayerStatus_Implementation(const FLobbyPlayerInfo& PlayerInfo);
 
 	UFUNCTION(BlueprintCallable, Client, Reliable)
 		void Client_SetupLobbyMenu(const FString& ServerName);
@@ -70,21 +69,13 @@ public:
 		void Client_ShowLoadingScreen();
 		void Client_ShowLoadingScreen_Implementation();
 
-		UFUNCTION(BlueprintCallable, Client, Reliable)
+	UFUNCTION(BlueprintCallable, Client, Reliable)
 		void Client_SetViewTargetSpot();
 		void Client_SetViewTargetSpot_Implementation();
 
 	UFUNCTION(BlueprintCallable, Client, Reliable)
 		void Client_SwitchToLobbyMode();
 		void Client_SwitchToLobbyMode_Implementation();
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-		class UInputMappingContext* LobbyPlayerControllerMappingContext;		
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-		class UInputAction* ToggleMenuAction;
-
-	virtual void BeginPlay() override;
 
 private:
 	class ULobby* Lobby;

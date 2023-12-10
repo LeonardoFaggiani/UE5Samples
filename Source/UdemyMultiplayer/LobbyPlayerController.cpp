@@ -4,6 +4,7 @@
 #include "LobbyPlayerController.h"
 #include "GameMode/LobbyGameMode.h"
 #include "Kismet/GameplayStatics.h"
+#include "Menu/OverheadPlayerSpot.h"
 #include "Net/UnrealNetwork.h"
 
 ALobbyPlayerController::ALobbyPlayerController(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
@@ -19,15 +20,9 @@ ALobbyPlayerController::ALobbyPlayerController(const FObjectInitializer& ObjectI
 
 		UGameInstance* GameInstance = World->GetGameInstance();
 
-		if (IsValid(GameInstance)) {
-			UdemyMultiplayerGameInstance = Cast<UUdemyMultiplayerGameInstance>(GameInstance);
-		}
+		if (IsValid(GameInstance))
+			UdemyMultiplayerGameInstance = Cast<UUdemyMultiplayerGameInstance>(GameInstance);	
 	}
-}
-
-void ALobbyPlayerController::BeginPlay()
-{
-	Super::BeginPlay();
 }
 
 #pragma region Server
@@ -46,9 +41,8 @@ void ALobbyPlayerController::Server_NotifyPlayerStatus_Implementation(const FLob
 {
 	PlayerSettings = PlayerInfo;
 
-	if (IsValid(LobbyGameMode)) {
+	if (IsValid(LobbyGameMode))
 		LobbyGameMode->Server_EveryoneUpdate();
-	}
 }
 
 #pragma endregion Server
@@ -57,12 +51,9 @@ void ALobbyPlayerController::Server_NotifyPlayerStatus_Implementation(const FLob
 
 void ALobbyPlayerController::Client_SetupLobbyMenu_Implementation(const FString& ServerName)
 {
-	if (!ensure(LobbyClass != nullptr)) return;
+	if (!ensure(this->LobbyClass != nullptr)) return;
 
 	this->Lobby = CreateWidget<ULobby>(this, LobbyClass);
-
-	if (!ensure(this->Lobby != nullptr)) return;
-
 	this->Lobby->SetServerName(ServerName);
 	this->Lobby->Setup();
 }
@@ -152,17 +143,6 @@ void ALobbyPlayerController::SetCurrentCharacter(AUdemyMultiplayerCharacter* cur
 AUdemyMultiplayerCharacter* ALobbyPlayerController::GetCurrentCharacter()
 {
 	return this->CurrentCharacter;
-}
-
-void ALobbyPlayerController::UpdateReadyState()
-{
-	AUdemyMultiplayerCharacter* UdemyMultiplayerCharacter = this->GetCurrentCharacter();
-
-	if (IsValid(UdemyMultiplayerCharacter))
-	{
-		UdemyMultiplayerCharacter->SetIsReady(this->PlayerSettings.bPlayerReadyState);
-		UdemyMultiplayerCharacter->OnRep_ReadyStateUpdated();
-	}
 }
 
 void ALobbyPlayerController::SetPlayerSpot(ALobbyPlayerSpot* playerSpot)

@@ -52,7 +52,7 @@ AUdemyMultiplayerCharacter::AUdemyMultiplayerCharacter()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
-	this->SetIsReady(true);
+	//this->SetReadyStatus(true);
 
 	OverheadPlayerSpot = CreateDefaultSubobject<UWidgetComponent>(TEXT("OverheadPlayerSpot"));
 	OverheadPlayerSpot->SetupAttachment(RootComponent);
@@ -72,6 +72,11 @@ void AUdemyMultiplayerCharacter::BeginPlay()
 			Subsystem->AddMappingContext(DefaultMappingContext, 0);
 		}
 	}
+
+	UOverheadPlayerSpot* InOverheadPlayerSpot = Cast<UOverheadPlayerSpot>(this->OverheadPlayerSpot->GetUserWidgetObject());
+
+	if (IsValid(InOverheadPlayerSpot))
+		InOverheadPlayerSpot->SetCharacter(this);
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -83,15 +88,14 @@ void AUdemyMultiplayerCharacter::SetupPlayerInputComponent(class UInputComponent
 	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		//Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacter::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Triggered, this, &AUdemyMultiplayerCharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &AUdemyMultiplayerCharacter::StopJumping);
 
 		//Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AUdemyMultiplayerCharacter::Move);
 
 		//Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AUdemyMultiplayerCharacter::Look);
-
 	}
 }
 
@@ -131,25 +135,33 @@ void AUdemyMultiplayerCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-void AUdemyMultiplayerCharacter::SetIsReady(bool InbReady)
+void AUdemyMultiplayerCharacter::Multi_SetReadyStatus_Implementation(bool InbIsReady)
 {
-	this->bReady = InbReady;
-}
+	this->bIsReady = InbIsReady;
 
-void AUdemyMultiplayerCharacter::OnRep_ReadyStateUpdated()
-{ 
 	UOverheadPlayerSpot* InOverheadPlayerSpot = Cast<UOverheadPlayerSpot>(this->OverheadPlayerSpot->GetUserWidgetObject());
 
 	if (IsValid(InOverheadPlayerSpot))
-		InOverheadPlayerSpot->SetReadyStatus(this->bReady);
+		InOverheadPlayerSpot->UpdateReadyStatus();
+	else {
+
+		FTimerHandle MemberTimerHandle;
+		FTimerDelegate TimerDel;
+
+		TimerDel.BindUFunction(this, FName("Multi_SetReadyStatus"), InbIsReady);
+
+		GetWorld()->GetTimerManager().SetTimer(MemberTimerHandle, TimerDel, 0.03f, false);
+	}
 }
 
 void AUdemyMultiplayerCharacter::Multi_SetPlayerName_Implementation(const FString& InPlayerName)
 {
+	this->PlayerName = InPlayerName;
+
 	UOverheadPlayerSpot* InOverheadPlayerSpot = Cast<UOverheadPlayerSpot>(this->OverheadPlayerSpot->GetUserWidgetObject());
 
 	if (IsValid(InOverheadPlayerSpot))
-		InOverheadPlayerSpot->SetPlayerName(InPlayerName);
+		InOverheadPlayerSpot->UpdatePlayerName();
 	else {
 
 		FTimerHandle MemberTimerHandle;
@@ -161,10 +173,21 @@ void AUdemyMultiplayerCharacter::Multi_SetPlayerName_Implementation(const FStrin
 	}
 }
 
+void AUdemyMultiplayerCharacter::Multi_SetIconAndColorOverheadWidget_Implementation(bool bIsHidden, const FString& InPlayerNameColor)
+{
+	UOverheadPlayerSpot* InOverheadPlayerSpot = Cast<UOverheadPlayerSpot>(this->OverheadPlayerSpot->GetUserWidgetObject());
+
+	if (IsValid(InOverheadPlayerSpot))
+	{
+		InOverheadPlayerSpot->SetPlayerNameColor(InPlayerNameColor);
+		InOverheadPlayerSpot->SetReadyStatusVisibility(bIsHidden);
+	}
+}
+
 void AUdemyMultiplayerCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(AUdemyMultiplayerCharacter, bReady);
+	DOREPLIFETIME(AUdemyMultiplayerCharacter, bIsReady);
 	DOREPLIFETIME(AUdemyMultiplayerCharacter, PlayerName);
 }

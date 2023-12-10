@@ -2,9 +2,9 @@
 
 #include "MenuBase.h"
 
-void UMenuBase::Setup()
+void UMenuBase::Setup(int32 zOrder)
 {
-	AddToViewport();
+	AddToViewport(zOrder);
 
 	UWorld* World = GetWorld();
 

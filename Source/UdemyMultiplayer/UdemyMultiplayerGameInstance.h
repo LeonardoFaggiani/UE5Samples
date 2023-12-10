@@ -8,10 +8,12 @@
 #include "Blueprint/UserWidget.h"
 #include "Menu/Struct/ConfigurationMaps.h"
 #include "Menu/Struct/PlayerSpot.h"
+#include "Menu/Struct/InGamePlayerInfo.h"
 #include "Menu/MainMenu.h"
 #include "Menu/LoadingScreen.h"
 #include "Engine/LevelScriptActor.h"
 #include "Menu/Struct/HeroeResources.h"
+#include "MoviePlayer.h"
 #include "UdemyMultiplayerGameInstance.generated.h"
 
 UCLASS()
@@ -20,6 +22,8 @@ class UDEMYMULTIPLAYER_API UUdemyMultiplayerGameInstance : public UGameInstance,
     GENERATED_BODY()
 
 public:
+
+    void OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld);
 
     UUdemyMultiplayerGameInstance(const FObjectInitializer& ObjectInitializer);
 
@@ -62,6 +66,9 @@ public:
         void SetOptionsMenu(bool InbIsOptionsMenu);
 
     UFUNCTION(BlueprintCallable)
+        void SetFirstTimeLoading(bool InbIsFirstTimeLoading);
+
+    UFUNCTION(BlueprintCallable)
         void StopMovie();
 
     UFUNCTION(BlueprintCallable)
@@ -76,12 +83,20 @@ public:
     UFUNCTION(BlueprintCallable)
         bool GetOptionsMenu();
 
+    UFUNCTION(BlueprintCallable)
+        bool GetIsFirstTimeLoading();
+
+    UFUNCTION(BlueprintCallable)
+        void PlayEnviromentMusic(USoundBase* Audio, float Volume, bool bIsPersistLevel);
+
     void InitializePlayerSpot();
     void InitializeHeroes();
 
     UPROPERTY(EditAnyWhere)
         TMap<FString, FConfigurationMaps> ConfigurationMaps;
-    TMap<int32, FPlayerSpot> ConfigurationPlayerSpot;
+        TMap<int32, FPlayerSpot> ConfigurationPlayerSpot;
+        TArray<FInGamePlayerInfo> InGamePlayersInfo;
+        TArray<FHeroeResources> HeroeResources;
 
     UPROPERTY(EditAnyWhere)
         TSubclassOf<UMainMenu> MenuClass;
@@ -91,8 +106,6 @@ public:
         int32 MaxPlayers;
     UPROPERTY(Replicated)
         FString ServerName;
-    UPROPERTY()
-        TArray<FHeroeResources> HeroeResources;
     UFUNCTION()
         TSubclassOf<AUdemyMultiplayerCharacter> GetHeroeByName(FString InHeroeName);
 
@@ -105,10 +118,15 @@ private:
         bool bIsFindGamesMenu{ false };
     UPROPERTY()
         bool bIsOptionsMenu{ false };
+    UPROPERTY()
+        bool bIsFirstTimeLoading{ true };
     UFUNCTION()
         void OpenLevelWithDelay(FName InLevelName, FString InListen);
     UPROPERTY()
         ULoadingScreen* LoadingScreen;
+    UPROPERTY()
+        UAudioComponent* Music;
 
     class UMainMenu* Menu;
+    FLoadingScreenAttributes LoadingScreenAttributes;
 };
